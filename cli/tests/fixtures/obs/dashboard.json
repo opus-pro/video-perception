@@ -1,0 +1,32 @@
+{
+  "version": "1.0",
+  "video_identity": {
+    "video": "test_video.mp4",
+    "duration_ms": 30000,
+    "resolution": "1920x1080",
+    "fps": 30.0,
+    "scene_count": 3
+  },
+  "global_stats": {
+    "brightness": {
+      "mean": 128.5,
+      "std": 22.3,
+      "source": "stats_fallback"
+    },
+    "motion": {
+      "moderate": 2,
+      "static": 1
+    },
+    "pacing": {
+      "median_scene_ms": 10000,
+      "shortest_ms": 5000,
+      "longest_ms": 15000
+    },
+    "audio": {
+      "lufs": -16.2,
+      "true_peak_dbfs": -1.5,
+      "loudness_range_lu": 8.0
+    },
+    "avsync": null
+  }
+}

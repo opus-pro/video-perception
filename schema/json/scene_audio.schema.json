@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "scene_idx": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "start_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "end_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "input_i": {
+      "type": "number"
+    },
+    "input_tp": {
+      "type": "number"
+    },
+    "input_lra": {
+      "type": "number"
+    },
+    "input_thresh": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "scene_idx",
+    "start_ms",
+    "end_ms",
+    "input_i",
+    "input_tp",
+    "input_lra",
+    "input_thresh"
+  ],
+  "additionalProperties": false
+}

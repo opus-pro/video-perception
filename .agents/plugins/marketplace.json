@@ -1,0 +1,25 @@
+{
+  "name": "video-perception",
+  "interface": {
+    "displayName": "Video Perception"
+  },
+  "plugins": [
+    {
+      "name": "video-perception",
+      "source": {
+        "source": "local",
+        "path": "./plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity",
+      "description": "Give agents practiced, local-first video perception: capability discovery, coarse-to-fine evidence gathering, and decentralized provider and knowledge-pack authoring.",
+      "version": "0.3.0",
+      "author": {
+        "name": "OpusClip"
+      }
+    }
+  ]
+}

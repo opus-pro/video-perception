@@ -1,0 +1,15 @@
+contract: video-perception.provider/v1
+id: user.my-transcript-cli
+version: 0.1.0
+description: Existing local transcript tool exposed through the stdio protocol
+locality: local
+media_transfer: never
+runtime:
+  type: command
+  command: [my-transcript-provider]
+  protocol: video-perception.provider-stdio/v1
+capabilities:
+  - id: transcript
+    contract: video-perception.transcript/v1
+    modes: [video]
+license: MIT

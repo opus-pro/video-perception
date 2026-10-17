@@ -1,0 +1,13 @@
+{
+  "name": "video-perception",
+  "version": "0.3.0",
+  "description": "Give agents practiced video perception, local capability discovery, and decentralized provider and knowledge-pack authoring.",
+  "author": {
+    "name": "OpusClip"
+  },
+  "repository": "https://github.com/opus-pro/video-perception",
+  "license": "MIT",
+  "skills": [
+    "./skills"
+  ]
+}

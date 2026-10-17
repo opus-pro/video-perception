@@ -1,0 +1,25 @@
+name: Capability or feature proposal
+description: Propose a provider, capability, contract, or agent integration
+title: "proposal: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: user
+    attributes:
+      label: User problem
+      description: Who needs this and what video task cannot be completed today?
+    validations:
+      required: true
+  - type: textarea
+    id: contract
+    attributes:
+      label: Proposed contract
+      description: Describe inputs, outputs, locality, prerequisites, failures, and streaming strategy.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: true

@@ -1,0 +1,25 @@
+contract: video-perception.strategy/v1
+id: foundation.deep-understanding
+version: 0.1.0
+description: Multimodal local-first reading with transcript and semantic scene descriptions
+plan:
+  contract: video-perception.sense-plan/v1
+  capabilities:
+    - id: probe
+    - id: scenes
+    - id: stats
+    - id: layout
+    - id: track
+    - id: transcript
+      required: false
+      provider: auto
+      policy: local-only
+    - id: scene-description
+      required: false
+  model_backend:
+    provider: ollama
+    model: gemma4
+guidance:
+  - Use transcript for spoken meaning and scene descriptions for visual evidence.
+  - Report unavailable optional providers instead of hiding missing evidence.
+license: MIT

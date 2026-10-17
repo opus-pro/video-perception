@@ -1,0 +1,71 @@
+{
+  "contract": "video-perception.observation/v1",
+  "version": "1.0",
+  "sense_plan": {
+    "contract": "video-perception.sense-plan/v1",
+    "capabilities": [
+      { "id": "probe", "required": true },
+      { "id": "scenes", "required": true },
+      { "id": "stats", "required": true },
+      { "id": "transcript", "required": false }
+    ]
+  },
+  "asset": {
+    "uri": "test_video.mp4",
+    "duration_ms": 30000,
+    "resolution": {
+      "width": 1920,
+      "height": 1080
+    },
+    "fps": 30.0
+  },
+  "scene_count": 3,
+  "capabilities": [
+    {
+      "id": "probe",
+      "scope": "global",
+      "backend": "rust",
+      "requested": true,
+      "required": true,
+      "status": "succeeded",
+      "output": "signals/metadata.json"
+    },
+    {
+      "id": "scenes",
+      "scope": "global",
+      "backend": "rust",
+      "requested": true,
+      "required": true,
+      "status": "succeeded",
+      "output": "signals/scenes.json"
+    },
+    {
+      "id": "stats",
+      "scope": "scene",
+      "backend": "rust",
+      "requested": true,
+      "required": true,
+      "status": "succeeded",
+      "output": "signals/scene_stats.json"
+    },
+    {
+      "id": "transcript",
+      "scope": "global",
+      "backend": "rust",
+      "requested": true,
+      "required": false,
+      "status": "succeeded",
+      "output": "signals/transcript.json",
+      "provider": {
+        "id": "whisper-cpp",
+        "locality": "local",
+        "timing": "aligned"
+      }
+    }
+  ],
+  "files": {
+    "dashboard": "dashboard.json",
+    "scenes": "scenes.jsonl",
+    "transcript": "transcript.jsonl"
+  }
+}

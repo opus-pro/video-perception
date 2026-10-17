@@ -1,0 +1,241 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            asset_os: darwin
+            asset_arch: arm64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            asset_os: linux
+            asset_arch: amd64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            asset_os: linux
+            asset_arch: amd64_musl
+          # Cross-compiled on the Apple Silicon runner; the test step is skipped.
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            asset_os: darwin
+            asset_arch: amd64
+            cross: true
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Install system deps (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg imagemagick
+
+      - name: Install musl toolchain
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: sudo apt-get install -y musl-tools
+
+      - name: Install system deps (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg imagemagick
+
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache cargo
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            cli/target
+          key: cargo-${{ matrix.target }}-${{ hashFiles('cli/Cargo.lock') }}
+
+      - name: Build
+        run: cd cli && cargo build --release --target ${{ matrix.target }}
+
+      - name: Test
+        if: ${{ !matrix.cross }}
+        run: cd cli && cargo test --release --target ${{ matrix.target }}
+
+      - name: Package
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+          ASSET_OS: ${{ matrix.asset_os }}
+          ASSET_ARCH: ${{ matrix.asset_arch }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          VERSION="${TAG_NAME#v}"
+          ASSET="video-perception_${VERSION}_${ASSET_OS}_${ASSET_ARCH}"
+          mkdir -p dist
+          cp "cli/target/${TARGET}/release/video-perception" dist/
+          tar -czf "${ASSET}.tar.gz" -C dist video-perception
+          shasum -a 256 "${ASSET}.tar.gz" > "${ASSET}.sha256"
+          echo "ASSET=${ASSET}" >> "$GITHUB_ENV"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ env.ASSET }}
+          path: |
+            ${{ env.ASSET }}.tar.gz
+            ${{ env.ASSET }}.sha256
+
+  build-wheels:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tool: [spectral, audio-class, autobeat, vlm, motion-snn]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Build wheel
+        run: pip install build && cd tools/${{ matrix.tool }} && python -m build --wheel
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: wheel-${{ matrix.tool }}
+          path: tools/${{ matrix.tool }}/dist/*.whl
+
+  build-dsh-plugin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: integrations/deepseek-harness/package-lock.json
+
+      - name: Build and test
+        working-directory: integrations/deepseek-harness
+        run: npm ci && npm run check
+
+      - name: Package
+        working-directory: integrations/deepseek-harness
+        run: mkdir -p dist && npm pack --pack-destination dist
+
+      - name: Upload package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: dsh-plugin
+          path: integrations/deepseek-harness/dist/*.tgz
+
+  release:
+    needs: [build, build-wheels, build-dsh-plugin]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          path: artifacts
+
+      - name: Collect assets
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          VERSION="${TAG_NAME#v}"
+          mkdir -p release
+          find artifacts -type f \( -name '*.tar.gz' -o -name '*.sha256' -o -name '*.whl' -o -name '*.tgz' \) -exec cp {} release/ \;
+          tar -czf "release/video-perception-plugin_${VERSION}.tar.gz" plugin
+          cd release && sha256sum *.tar.gz *.whl *.tgz > checksums.txt
+          ls -la
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG_NAME" \
+            --title "video-perception $TAG_NAME" \
+            --generate-notes \
+            release/*.tar.gz \
+            release/*.whl \
+            release/*.tgz \
+            release/checksums.txt
+
+  # Publishes the npm launcher (packaging/npm) under the release version.
+  # Skipped until the NPM_TOKEN secret exists, so a release never fails on it.
+  publish-npm:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Publish launcher
+        working-directory: packaging/npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "NPM_TOKEN is not set; skipping npm publish"
+            exit 0
+          fi
+          node --check bin.mjs
+          npm version --no-git-tag-version "${TAG_NAME#v}"
+          npm publish --access public --provenance
+
+  # Renders packaging/homebrew/video-perception.rb.tmpl with the release
+  # checksums and pushes it to opus-pro/homebrew-tap. Skipped until the
+  # HOMEBREW_TAP_TOKEN secret (write access to that repository) exists.
+  update-homebrew-tap:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Download release checksums
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: gh release download "$TAG_NAME" --pattern checksums.txt --dir release
+
+      - name: Render and push the formula
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          if [ -z "$HOMEBREW_TAP_TOKEN" ]; then
+            echo "HOMEBREW_TAP_TOKEN is not set; skipping Homebrew tap update"
+            exit 0
+          fi
+          VERSION="${TAG_NAME#v}"
+          sh packaging/homebrew/render.sh "$VERSION" release/checksums.txt \
+            packaging/homebrew/video-perception.rb.tmpl > video-perception.rb
+          git clone --depth 1 "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/opus-pro/homebrew-tap.git" tap
+          mkdir -p tap/Formula
+          cp video-perception.rb tap/Formula/video-perception.rb
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/video-perception.rb
+          git commit -m "video-perception ${VERSION}"
+          git push

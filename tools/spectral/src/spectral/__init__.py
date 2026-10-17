@@ -1,0 +1,1 @@
+"""Audio spectral analysis sensor."""

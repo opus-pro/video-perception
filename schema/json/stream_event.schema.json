@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "contract": {
+      "type": "string",
+      "const": "video-perception.stream-event/v1"
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seq": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "observed_at_unix_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "media_time_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "capability": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "session.started",
+        "session.finalizing",
+        "session.closed",
+        "measurement",
+        "asset",
+        "capability.completed",
+        "capability.failed",
+        "discontinuity"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "provisional",
+        "final",
+        "error"
+      ]
+    },
+    "provider": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "class": {
+          "type": "string",
+          "enum": [
+            "built-in-local",
+            "system-native",
+            "user-managed-local",
+            "user-configured-remote"
+          ]
+        },
+        "locality": {
+          "type": "string",
+          "enum": [
+            "local",
+            "remote"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "class",
+        "locality"
+      ],
+      "additionalProperties": false
+    },
+    "payload": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {}
+    }
+  },
+  "required": [
+    "contract",
+    "session_id",
+    "seq",
+    "observed_at_unix_ms",
+    "capability",
+    "kind",
+    "status",
+    "payload"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "video-perception",
+  "version": "0.3.0",
+  "description": "Give agents practiced, local-first video perception: capability discovery, coarse-to-fine evidence gathering, and decentralized provider and knowledge-pack authoring.",
+  "author": {
+    "name": "OpusClip"
+  },
+  "homepage": "https://github.com/opus-pro/video-perception",
+  "repository": "https://github.com/opus-pro/video-perception",
+  "license": "MIT",
+  "keywords": ["video", "perception", "agent", "mcp", "ffmpeg", "local-first"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Video Perception",
+        "shortDescription": "Give agents a practiced, local-first way to understand video",
+        "longDescription": "Discover what a machine already provides, apply curated video-reading techniques, connect user-owned models and APIs, and return queryable observations with provenance.",
+        "developerName": "OpusClip",
+        "category": "Developer Tools",
+        "capabilities": ["Interactive", "Read", "Write"],
+        "websiteURL": "https://github.com/opus-pro/video-perception",
+        "defaultPrompt": [
+          "Tell me what happens in this video",
+          "Find the important moments in this video using only local capabilities",
+          "Connect my existing vision model as a video provider",
+          "Turn this video-reading method into a reusable perception pack"
+        ],
+        "screenshots": []
+      }
+    }
+  }
+}

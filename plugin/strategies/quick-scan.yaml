@@ -1,0 +1,18 @@
+contract: video-perception.strategy/v1
+id: foundation.quick-scan
+version: 0.1.0
+description: Fast local structural scan before deciding whether deeper perception is needed
+plan:
+  contract: video-perception.sense-plan/v1
+  capabilities:
+    - id: probe
+    - id: scenes
+    - id: stats
+    - id: layout
+    - id: track
+    - id: loudnorm
+    - id: signalstats
+guidance:
+  - Start with deterministic evidence and identify information-dense intervals.
+  - Escalate only intervals that cannot be answered from structure, motion, and audio.
+license: MIT

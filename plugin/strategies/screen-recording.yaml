@@ -1,0 +1,30 @@
+contract: video-perception.strategy/v1
+id: foundation.screen-recording
+version: 0.1.0
+description: Read UI-heavy recordings using scene, layout, motion, and semantic evidence
+plan:
+  contract: video-perception.sense-plan/v1
+  capabilities:
+    - id: probe
+    - id: scenes
+      options:
+        threshold: 0.18
+        merge_ms: 350
+        merge: true
+    - id: stats
+    - id: layout
+    - id: track
+    - id: signalstats
+    - id: transcript
+      required: false
+      provider: auto
+      policy: local-only
+    - id: scene-description
+      required: false
+  model_backend:
+    provider: ollama
+    model: gemma4
+guidance:
+  - Treat UI and text changes as evidence even when global motion is low.
+  - Query timestamps around window changes before loading more frames.
+license: MIT

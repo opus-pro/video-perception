@@ -1,0 +1,34 @@
+[project]
+name = "autobeat"
+version = "0.1.0"
+description = "Automatic beat-grid extraction and span-track layout CLI"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26.0",
+    "librosa>=0.10.1",
+    "soundfile>=0.12.1",
+]
+
+[project.optional-dependencies]
+downbeat = [
+    "madmom>=0.16.1",
+]
+
+[project.scripts]
+autobeat = "autobeat.main:main_entry"
+autobeat-layout = "autobeat.main:layout_entry"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/autobeat"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+]

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "input_i": {
+      "type": "number"
+    },
+    "input_tp": {
+      "type": "number"
+    },
+    "input_lra": {
+      "type": "number"
+    },
+    "input_thresh": {
+      "type": "number"
+    },
+    "sample_rate": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "channels": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "input_i",
+    "input_tp",
+    "input_lra",
+    "input_thresh",
+    "sample_rate",
+    "channels",
+    "duration_ms"
+  ],
+  "additionalProperties": false
+}

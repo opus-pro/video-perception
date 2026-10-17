@@ -1,0 +1,37 @@
+# Rendered by packaging/homebrew/render.sh at release time and pushed to
+# opus-pro/homebrew-tap as Formula/video-perception.rb.
+class VideoPerception < Formula
+  desc "Practiced, local-first video perception for agents"
+  homepage "https://github.com/opus-pro/video-perception"
+  version "@VERSION@"
+  license "MIT"
+
+  on_macos do
+    on_arm do
+      url "https://github.com/opus-pro/video-perception/releases/download/v@VERSION@/video-perception_@VERSION@_darwin_arm64.tar.gz"
+      sha256 "@SHA_DARWIN_ARM64@"
+    end
+    on_intel do
+      url "https://github.com/opus-pro/video-perception/releases/download/v@VERSION@/video-perception_@VERSION@_darwin_amd64.tar.gz"
+      sha256 "@SHA_DARWIN_AMD64@"
+    end
+  end
+
+  on_linux do
+    on_intel do
+      url "https://github.com/opus-pro/video-perception/releases/download/v@VERSION@/video-perception_@VERSION@_linux_amd64.tar.gz"
+      sha256 "@SHA_LINUX_AMD64@"
+    end
+  end
+
+  depends_on "ffmpeg"
+  depends_on "imagemagick" => :recommended
+
+  def install
+    bin.install "video-perception"
+  end
+
+  test do
+    assert_match version.to_s, shell_output("#{bin}/video-perception --version")
+  end
+end

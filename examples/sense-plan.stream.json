@@ -1,0 +1,7 @@
+{
+  "contract": "video-perception.sense-plan/v1",
+  "capabilities": [
+    { "id": "keyframes", "required": false },
+    { "id": "signalstats", "required": false }
+  ]
+}

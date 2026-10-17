@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Usage and support
+    url: https://github.com/opus-pro/video-perception/discussions
+    about: Ask how to use Video Perception without opening a bug.

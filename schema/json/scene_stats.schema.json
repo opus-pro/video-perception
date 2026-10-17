@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "scene_idx": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "start_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "end_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "avg_brightness": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 255
+    },
+    "min_brightness": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 255
+    },
+    "max_brightness": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 255
+    },
+    "contrast": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "saturation": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "dominant_colors": {
+      "maxItems": 5,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^#[0-9a-fA-F]{6}$"
+      }
+    },
+    "color_temp_k": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "keyframe": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "scene_idx",
+    "start_ms",
+    "end_ms",
+    "avg_brightness",
+    "min_brightness",
+    "max_brightness",
+    "contrast",
+    "saturation",
+    "dominant_colors",
+    "keyframe"
+  ],
+  "additionalProperties": false
+}

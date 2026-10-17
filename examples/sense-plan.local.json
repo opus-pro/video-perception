@@ -1,0 +1,14 @@
+{
+  "contract": "video-perception.sense-plan/v1",
+  "capabilities": [
+    { "id": "stats", "required": true },
+    { "id": "signalstats", "required": false },
+    {
+      "id": "transcript",
+      "required": false,
+      "provider": "auto",
+      "policy": "local-only",
+      "language": "en"
+    }
+  ]
+}

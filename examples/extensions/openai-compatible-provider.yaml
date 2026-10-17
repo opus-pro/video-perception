@@ -1,0 +1,18 @@
+contract: video-perception.provider/v1
+id: user.openai-compatible
+version: 0.1.0
+description: User-owned OpenAI-compatible vision endpoint
+locality: remote
+media_transfer: required
+runtime:
+  type: openai-compatible
+  base_url: https://api.openai.com/v1
+  credential_env: OPENAI_API_KEY
+capabilities:
+  - id: scene-description
+    contract: video-perception.scene-description/v1
+    modes: [video]
+  - id: gibberish-text
+    contract: video-perception.gibberish-text/v1
+    modes: [video]
+license: MIT

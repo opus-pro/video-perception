@@ -1,0 +1,297 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "contract": {
+      "type": "string",
+      "const": "video-perception.stream-session/v1"
+    },
+    "version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "running",
+        "closed",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "uri": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "file",
+            "network"
+          ]
+        },
+        "pacing": {
+          "type": "string",
+          "enum": [
+            "readrate",
+            "unpaced",
+            "source-paced"
+          ]
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "uri",
+        "kind",
+        "pacing",
+        "speed"
+      ],
+      "additionalProperties": false
+    },
+    "sense_plan": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "type": "string",
+          "const": "video-perception.sense-plan/v1"
+        },
+        "capabilities": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "required": {
+                "type": "boolean"
+              },
+              "provider": {
+                "type": "string",
+                "minLength": 1
+              },
+              "policy": {
+                "type": "string",
+                "minLength": 1
+              },
+              "language": {
+                "type": "string",
+                "minLength": 1
+              },
+              "options": {
+                "type": "object",
+                "properties": {
+                  "threshold": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "merge_ms": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "merge": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "model_backend": {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "minLength": 1
+            },
+            "model": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "provider"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contract",
+        "capabilities"
+      ],
+      "additionalProperties": false
+    },
+    "started_at_unix_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "ended_at_unix_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "event_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "backpressure": {
+      "type": "string",
+      "enum": [
+        "block",
+        "drop-newest"
+      ]
+    },
+    "event_buffer": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "capabilities": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "strategy": {
+            "type": "string",
+            "enum": [
+              "native",
+              "windowed",
+              "finalize-only",
+              "unsupported"
+            ]
+          },
+          "provider": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "class": {
+                "type": "string",
+                "enum": [
+                  "built-in-local",
+                  "system-native",
+                  "user-managed-local",
+                  "user-configured-remote"
+                ]
+              },
+              "locality": {
+                "type": "string",
+                "enum": [
+                  "local",
+                  "remote"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "class",
+              "locality"
+            ],
+            "additionalProperties": false
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "running",
+              "succeeded",
+              "failed"
+            ]
+          },
+          "dropped_events": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "summary": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "error": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "required",
+          "strategy",
+          "provider",
+          "status",
+          "dropped_events"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "files": {
+      "type": "object",
+      "properties": {
+        "events": {
+          "type": "string",
+          "const": "events.jsonl"
+        },
+        "tracks": {
+          "type": "string",
+          "const": "tracks/"
+        },
+        "observation": {
+          "type": "string",
+          "const": "observation"
+        }
+      },
+      "required": [
+        "events",
+        "tracks"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "contract",
+    "version",
+    "session_id",
+    "state",
+    "source",
+    "sense_plan",
+    "started_at_unix_ms",
+    "event_count",
+    "backpressure",
+    "event_buffer",
+    "capabilities",
+    "files"
+  ],
+  "additionalProperties": false
+}

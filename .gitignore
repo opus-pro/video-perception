@@ -1,0 +1,56 @@
+# Generated output
+output/
+
+# Pipeline output (generated per-run)
+signals/
+!cli/tests/fixtures/obs/signals/
+!cli/tests/fixtures/obs/signals/**
+opinions/
+compose/
+generate/
+
+# Demo assets (local, not committed)
+demo/
+
+# Media files
+*.mp4
+*.mov
+*.mkv
+*.avi
+*.webm
+*.wav
+*.mp3
+
+# Python
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+dist/
+lib/
+.pytest_cache/
+
+# Rust
+cli/target/
+
+# Experiments (generated test data)
+experiments/
+
+# OS
+.DS_Store
+
+# Secrets & credentials
+.env
+config/service-account.json
+*.pem
+*.key
+
+# Docker model weights (large binaries, download at runtime)
+docker/.weights/
+
+# Test output (per-run, not committed)
+shot-output/
+test-vlog/
+test-morning-run/
+.context/

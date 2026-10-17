@@ -1,0 +1,275 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "contract": {
+      "type": "string",
+      "const": "video-perception.observation/v1"
+    },
+    "version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "sense_plan": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "type": "string",
+          "const": "video-perception.sense-plan/v1"
+        },
+        "capabilities": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "required": {
+                "type": "boolean"
+              },
+              "provider": {
+                "type": "string",
+                "minLength": 1
+              },
+              "policy": {
+                "type": "string",
+                "minLength": 1
+              },
+              "language": {
+                "type": "string",
+                "minLength": 1
+              },
+              "options": {
+                "type": "object",
+                "properties": {
+                  "threshold": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "merge_ms": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "merge": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "model_backend": {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "minLength": 1
+            },
+            "model": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "provider"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contract",
+        "capabilities"
+      ],
+      "additionalProperties": false
+    },
+    "asset": {
+      "type": "object",
+      "properties": {
+        "uri": {
+          "type": "string"
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "resolution": {
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "width",
+            "height"
+          ],
+          "additionalProperties": false
+        },
+        "fps": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "uri",
+        "duration_ms",
+        "resolution",
+        "fps"
+      ],
+      "additionalProperties": false
+    },
+    "scene_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "global",
+              "scene"
+            ]
+          },
+          "backend": {
+            "type": "string",
+            "enum": [
+              "rust",
+              "python",
+              "vlm"
+            ]
+          },
+          "requested": {
+            "type": "boolean"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "succeeded",
+              "failed",
+              "skipped"
+            ]
+          },
+          "output": {
+            "type": "string",
+            "pattern": "^signals\\/.*"
+          },
+          "error": {
+            "type": "string",
+            "minLength": 1
+          },
+          "provider": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "locality": {
+                "type": "string",
+                "enum": [
+                  "local",
+                  "remote"
+                ]
+              },
+              "model": {
+                "type": "string"
+              },
+              "timing": {
+                "type": "string",
+                "enum": [
+                  "aligned",
+                  "estimated",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "locality"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "scope",
+          "backend",
+          "requested",
+          "required",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "files": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "type": "string",
+          "const": "dashboard.json"
+        },
+        "scenes": {
+          "type": "string",
+          "const": "scenes.jsonl"
+        },
+        "transcript": {
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "transcript.jsonl"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "dashboard",
+        "scenes",
+        "transcript"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "contract",
+    "version",
+    "sense_plan",
+    "asset",
+    "scene_count",
+    "capabilities",
+    "files"
+  ],
+  "additionalProperties": false
+}

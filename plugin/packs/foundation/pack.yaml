@@ -1,0 +1,8 @@
+contract: video-perception.knowledge-pack/v1
+id: foundation.video-practice
+version: 0.1.0
+description: Baseline video perception practices for every agent
+strategy: foundation.quick-scan
+knowledge:
+  - playbook.md
+license: MIT

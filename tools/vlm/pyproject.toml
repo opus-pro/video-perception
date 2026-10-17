@@ -1,0 +1,16 @@
+[project]
+name = "video-perception-vlm"
+version = "0.2.0"
+description = "VLM inference engine for Video Perception (Ollama, Gemini, and user-configured compatible endpoints)"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+video-perception-vlm = "vlm_engine.main:main"
+
+[tool.setuptools.package-data]
+vlm_engine = ["presets/*/prompt.md"]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
