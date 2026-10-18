@@ -158,6 +158,14 @@ jobs:
           cd release && sha256sum *.tar.gz *.whl *.tgz > checksums.txt
           ls -la
 
+      # Keep the assembled assets even if the next step cannot reach the GitHub
+      # API from this runner; scripts/publish-release.sh publishes them.
+      - name: Upload assembled assets
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-assets
+          path: release/
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

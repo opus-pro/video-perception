@@ -53,4 +53,14 @@ without an appropriate license.
 
 Use a clear title, explain the user-visible behavior, list verification commands, and call out privacy or compatibility changes. Add a decision record under `docs/decisions/` for durable architectural choices and a postmortem under `docs/postmortems/` for material incidents.
 
+## Releasing
+
+Push an annotated tag `vX.Y.Z` on `main`. The Release workflow builds the binaries, wheels and plugin bundle, uploads them as the `release-assets` artifact, and then creates the GitHub Release with `checksums.txt`. If that last step cannot run from the hosted runner, publish the same artifact from your machine:
+
+```sh
+scripts/publish-release.sh vX.Y.Z
+```
+
+The script verifies `checksums.txt` before it creates the release, or replaces the assets when the release already exists. The `publish-npm` and `update-homebrew-tap` jobs depend on the workflow's own release step and are skipped while `NPM_TOKEN` and `HOMEBREW_TAP_TOKEN` are unset.
+
 By contributing, you agree that your contribution is licensed under the MIT License.

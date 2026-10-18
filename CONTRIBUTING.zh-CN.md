@@ -9,6 +9,6 @@
 - provider 报错不能伪装成空结果成功；`capabilities` 和 `setup` 必须保持只读，不能自动安装软件或读取凭证。
 - 贡献 Knowledge Pack 时，不得在许可证不允许的情况下再分发教程、数据集、模型权重或文档。
 
-本地验证请参考英文版 [CONTRIBUTING.md](CONTRIBUTING.md)。架构决策放入 `docs/decisions/`，重要事故复盘放入 `docs/postmortems/`。
+本地验证请参考英文版 [CONTRIBUTING.md](CONTRIBUTING.md)。发布流程见英文版的 Releasing 一节。架构决策放入 `docs/decisions/`，重要事故复盘放入 `docs/postmortems/`。
 
 提交贡献即表示你同意以 MIT License 发布该贡献。
