@@ -1,2 +1,3 @@
 fixtures/
 results/raw/
+*.local.sh
