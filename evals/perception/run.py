@@ -230,10 +230,12 @@ def main() -> None:
     spec = json.loads((HERE / "tasks.json").read_text())
 
     if args.probe:
+        failed = False
         for condition in conditions:
             result = one_run(args, binary, args.fixtures, None, PROBE, condition, 0)
             print(f"== {args.agent} / {condition} (exit {result['exit']})\n{result['final'].strip()}\n")
-        return
+            failed = failed or result["exit"] != 0
+        sys.exit(1 if failed else 0)
 
     if not (args.fixtures / "ground-truth.json").is_file():
         sys.exit(f"fixtures missing in {args.fixtures}; run fixtures.py first")
