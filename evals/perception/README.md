@@ -29,8 +29,9 @@ Isolation per agent, checked with `run.py --probe`:
   with `apps = false`, because an app can upload the video to a remote service
   and answer from there. The plugin condition adds the skills and the MCP
   server to that temporary home.
-- **DeepSeek Harness** runs with a temporary `DSH_HOME`. The plugin condition
-  installs the adapter in `integrations/deepseek-harness`.
+- **DeepSeek Harness** runs with a temporary `HOME` and `DSH_HOME`, so
+  user-level skills do not load. The plugin condition installs the adapter in
+  `integrations/deepseek-harness`.
 
 ## Fixtures and ground truth
 

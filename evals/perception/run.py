@@ -154,9 +154,12 @@ def run_codex(ws: Path, prompt: str, condition: str, env: dict, model: str | Non
 def run_dsh(ws: Path, prompt: str, condition: str, env: dict, model: str | None, timeout: int, home: Path) -> dict:
     if not env.get("DEEPSEEK_API_KEY"):
         sys.exit("dsh runs need DEEPSEEK_API_KEY in the environment")
+    # A temporary HOME keeps user-level skills (~/.agents/skills) out of both conditions.
+    fake_home = home / "home"
+    fake_home.mkdir()
     dsh_home = home / "dsh"
     dsh_home.mkdir()
-    env = dict(env, DSH_HOME=str(dsh_home))
+    env = dict(env, HOME=str(fake_home), DSH_HOME=str(dsh_home))
     if condition == "plugin":
         packed = sorted((home / "pack").glob("*.tgz")) if (home / "pack").exists() else []
         if not packed:
