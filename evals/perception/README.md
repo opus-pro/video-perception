@@ -93,8 +93,9 @@ or failed, and the shell commands the agent ran. Local paths are replaced with
 
 ## Results, October 2026
 
-Runs: Claude Code with Sonnet and with Haiku, and Codex with its default model,
-16 runs per condition each. The full table is in
+Runs: Claude Code with Sonnet and with Haiku, Codex with its default model, and
+DeepSeek Harness with its default `deepseek-flash` model, 16 runs per condition
+each. The full table is in
 [`results/summary.md`](results/summary.md), and every run's answer, grade and
 shell commands are in [`results/graded.jsonl`](results/graded.jsonl).
 
@@ -103,6 +104,7 @@ shell commands are in [`results/graded.jsonl`](results/graded.jsonl).
 | Claude Code, Sonnet | 16/16 and 14/16 | 109 s and 28 s | 15 s and 24 s |
 | Claude Code, Haiku | 16/16 and 15/16 | 412 s and 19 s | 23 s and 31 s |
 | Codex | 14/16 and 16/16 | 164 s and 64 s | 32 s and 60 s |
+| DeepSeek Harness, Flash | 15/16 and 15/16 | 503 s and 139 s | 132 s and 82 s |
 
 What we learned:
 
@@ -110,8 +112,11 @@ What we learned:
   agents usually find the answer without the plugin. Without it they improvise:
   Claude Code built a Python environment and downloaded a speech model, and
   Codex guessed two spoken-word answers from the slides.
-- The plugin helps most when the answer is spoken or sits in a long video. It
-  costs a few seconds on quick checks such as black frames or a loud spike.
+- The plugin helps most when the answer is spoken or sits in a long video. On
+  Claude Code and Codex it costs a few seconds on quick checks such as black
+  frames or a loud spike. DeepSeek Harness, the slowest agent without it, got
+  faster on every kind of question; without the plugin one of its runs hit the
+  15-minute limit with no answer.
 - The plugin made counting cuts worse. Its scene detector reports false
   boundaries on static slides and counts text overlays as cuts, and agents
   trusted that count.
@@ -127,4 +132,6 @@ Known measurement noise:
   Those runs were discarded and all 32 Codex runs were repeated with
   `apps = false`.
 
-DeepSeek Harness runs need a `DEEPSEEK_API_KEY` and are not included yet.
+DeepSeek Harness prints only its final answer in headless mode, so the
+summary's "Used Video Perception" column reads 0 for it even in the plugin
+condition.

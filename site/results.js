@@ -46,6 +46,21 @@
     "long_s": 64,
     "quick_s": 60
    }
+  },
+  {
+   "label": "DeepSeek Harness · Flash",
+   "baseline": {
+    "passed": 15,
+    "total": 16,
+    "long_s": 503,
+    "quick_s": 132
+   },
+   "plugin": {
+    "passed": 15,
+    "total": 16,
+    "long_s": 139,
+    "quick_s": 82
+   }
   }
  ],
  "story": {

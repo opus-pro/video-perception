@@ -234,7 +234,7 @@ footer p { margin: 0 0 8px; max-width: 70ch; }
 
     <section aria-labelledby="results">
       <h2 class="big" id="results" data-i18n="results.title">Same agent, same computer, one plugin apart.</h2>
-      <div class="prose"><p data-i18n="results.p">Eight everyday questions with exact answers: find a sentence, read a code on screen, find the dead air, spot a black screen, count the cuts. Each agent ran every question twice without the plugin and twice with it. The plugin helped most when the answer was spoken or buried in a long video. On quick checks it added a few seconds. On counting cuts it made Claude Code worse, because its scene detector over-counts; that is the next fix.</p></div>
+      <div class="prose"><p data-i18n="results.p">Eight everyday questions with exact answers: find a sentence, read a code on screen, find the dead air, spot a black screen, count the cuts. Each agent ran every question twice without the plugin and twice with it. The plugin helped most when the answer was spoken or buried in a long video. On quick checks it added a few seconds, except for DeepSeek Harness, which got faster on every kind of question. On counting cuts it made agents worse, because its scene detector over-counts; that is the next fix.</p></div>
       <div class="table-scroll"><table id="results-table"></table></div>
       <p class="note" data-i18n-html="results.note">Prompts, videos, grading and every agent's commands are in <a href="https://github.com/opus-pro/video-perception/tree/main/evals/perception">evals/perception</a>. Run it yourself on your own agent.</p>
     </section>
@@ -359,7 +359,7 @@ video-perception setup --profile basic</pre>
       "why.p1": "用 agent 搭视频工作流的人，大多没学过 FFmpeg、语音转写或者抽帧。他们照着别人分享的配置装好，希望 agent 自己搞定剩下的。",
       "why.p2": "能力强的 agent 通常能绕一圈自己做到。在我们的测试里，没装插件的 Claude Code 先建了一个 Python 环境、从网上下载语音模型，才答出来。没装插件的 Codex 有两道语音题答错了，它是照着幻灯片猜的。Video Perception 给 agent 一套练熟的看和听的方法，让它直接用对的办法。",
       "results.title": "同一个 agent，同一台电脑，只差一个插件。",
-      "results.p": "八个日常问题，每个都有确切答案：找一句话、读屏幕上的码、找出冷场、发现黑屏、数剪辑点。每个 agent 不装插件和装插件各把每道题跑两次。答案在语音里或藏在长视频里时，插件帮助最大。简单检查会多花几秒。数剪辑点时插件反而让 Claude Code 答错，因为它的场景检测会多数，这是下一步要修的。",
+      "results.p": "八个日常问题，每个都有确切答案：找一句话、读屏幕上的码、找出冷场、发现黑屏、数剪辑点。每个 agent 不装插件和装插件各把每道题跑两次。答案在语音里或藏在长视频里时，插件帮助最大。简单检查会多花几秒，只有 DeepSeek Harness 在各类问题上都变快了。数剪辑点时插件反而让 agent 答错，因为它的场景检测会多数，这是下一步要修的。",
       "results.note": "提示词、视频、打分规则和每个 agent 执行过的命令都在 <a href=\"https://github.com/opus-pro/video-perception/tree/main/evals/perception\">evals/perception</a>。你也可以拿自己的 agent 跑一遍。",
       "install.title": "三步装好。",
       "s1.title": "安装工具", "s1.p": "它需要 FFmpeg。Mac 上有 Homebrew 的话，先运行第一行。",

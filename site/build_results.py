@@ -24,7 +24,7 @@ LABELS = {
     ("claude", "sonnet"): "Claude Code · Sonnet",
     ("claude", "haiku"): "Claude Code · Haiku",
     ("codex", "default"): "Codex",
-    ("dsh", "default"): "DeepSeek Harness",
+    ("dsh", "default"): "DeepSeek Harness \u00b7 Flash",
 }
 ORDER = list(LABELS)
 # Tasks whose answer is spoken or sits in the 12-minute video; the rest are quick checks.
