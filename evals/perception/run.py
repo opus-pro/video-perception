@@ -38,7 +38,10 @@ PLUGIN = ROOT / "plugin"
 DSH_PACKAGE = ROOT / "integrations" / "deepseek-harness"
 # Only what the agents and local tools need; unrelated credentials stay out of the runs.
 ENV_KEEP = {"HOME", "USER", "LOGNAME", "PATH", "SHELL", "TMPDIR", "LANG", "TERM",
-            "WHISPER_CPP_BIN", "WHISPER_CPP_MODEL", "DEEPSEEK_API_KEY", "CODEX_HOME"}
+            "WHISPER_CPP_BIN", "WHISPER_CPP_MODEL", "DEEPSEEK_API_KEY", "CODEX_HOME",
+            # Network settings, not credentials: machines behind a TLS-inspecting proxy need these to reach model APIs.
+            "NODE_EXTRA_CA_CERTS", "SSL_CERT_FILE", "SSL_CERT_DIR", "REQUESTS_CA_BUNDLE", "CURL_CA_BUNDLE",
+            "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "no_proxy", "all_proxy"}
 PROBE = ("Answer in three lines and nothing else: (1) every skill name you can use, "
          "(2) every plugin name, (3) every MCP server and its tools.")
 
