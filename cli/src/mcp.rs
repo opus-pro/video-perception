@@ -25,13 +25,15 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use tokio::process::Command;
 
-const INSTRUCTIONS: &str = "Video Perception gives an agent local-first video evidence. \
-Measure first: call `capabilities` once, then `observe` with deterministic capabilities \
-(probe, scenes, stats, signalstats, track, loudnorm) before any model route. `observe` and \
-`sample` return a directory path; pass it to `query`, `observation_diff`, or as `sample`'s \
-parent. Every tool runs on this machine and sends no media anywhere unless a SensePlan or \
-strategy names a remote provider. Timestamps come from decoded evidence; verify any \
-model-stated time against them before citing it.";
+const INSTRUCTIONS: &str = "Video Perception indexes the video capabilities on this machine \
+and runs the heavier ones for you. Pass the video path as the user gave it: a relative path \
+such as `clip.mp4` resolves against your working directory, so never search the disk for the \
+file. Call `capabilities` to see what is installed (local transcription, OCR, tools you can \
+call yourself with their `usage`) instead of looking for models or packages. Do quick checks \
+such as black frames, silence, or loudness with FFmpeg directly. For speech, text in a long \
+video, or several questions about one video, `observe` once and `query` the returned directory \
+as often as needed. Every tool runs on this machine and sends no media anywhere unless a \
+SensePlan or strategy names a remote provider. Cite timestamps from decoded evidence.";
 
 const STDERR_TAIL_CHARS: usize = 2000;
 const MAX_IMAGE_BYTES: u64 = 5 * 1024 * 1024;
