@@ -30,8 +30,17 @@ run this skill merely because an optional provider is unavailable.
 2. For an Ollama-compatible service, use `runtime.type: ollama-compatible`.
 3. For another installed CLI or runtime, implement the language-independent
    `video-perception.provider-stdio/v1` command protocol.
-4. Declare only the capability cells the provider really implements. A
+4. For a tool the agent should call itself, such as an OCR command or a short
+   script against an operating-system framework, use `runtime.type: external`
+   and write `usage` that says how to call it. Video Perception never runs it.
+5. Declare only the capability cells the provider really implements. A
    provider is never required to complete the full matrix.
+
+Add a `detect` block so `video-perception capabilities` can tell whether the
+provider works on this machine and report it in the index. Each check is a
+`command` on PATH, a file through `env` or `file_globs`, or a top-level
+`python_module`; all are read-only. See "External tool example" in
+`docs/extensions.md`.
 
 Start from `../../templates/openai-compatible-provider.yaml` or
 `../../templates/command-provider.yaml`. In a repository checkout, the same

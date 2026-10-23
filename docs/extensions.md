@@ -37,7 +37,52 @@ Supported v1 runtime declarations are:
 - `openai-compatible`: generic semantic vision through a user-selected model;
 - `ollama-compatible`: generic local semantic vision;
 - `command`: any executable implementing the stdio protocol;
-- `native`: discovery metadata for an operating-system host integration.
+- `native`: discovery metadata for an operating-system host integration;
+- `external`: a tool the agent calls itself. Video Perception never runs it;
+  `usage` tells the agent how.
+
+Any provider may add a `detect` block of read-only checks. `video-perception
+capabilities` evaluates them and reports the provider, with the paths it
+resolved, in the machine's index. A check is exactly one of:
+
+- `command`: a name looked up on PATH; `env` optionally names a variable whose
+  value is the path to use instead;
+- a file check: `env` and/or `file_globs`, where a glob may start with `~/` and
+  use `*` in its last path component;
+- `python_module`: a top-level package located with `importlib.util.find_spec`,
+  which does not import it.
+
+`platforms` limits the provider to `macos`, `linux`, or `windows`.
+
+### External tool example
+
+When an agent finds or writes a tool the index does not list, it can record it
+so later sessions find it without searching:
+
+```yaml
+contract: video-perception.provider/v1
+id: user.paddle-ocr
+version: 0.1.0
+description: Read Chinese and English text in frames with PaddleOCR.
+locality: local
+media_transfer: never
+runtime:
+  type: external
+usage: >-
+  In Python: `from paddleocr import PaddleOCR; PaddleOCR(lang="ch").ocr("frame.png")`.
+capabilities:
+  - id: ocr
+    contract: unspecified
+detect:
+  checks:
+    - id: paddleocr
+      python_module: paddleocr
+      detail: paddleocr Python package
+      action: pip install paddleocr
+```
+
+The built-in catalog in `cli/src/builtin_providers.yaml` uses the same format
+for whisper.cpp, the Apple provider host, Ollama, and per-platform tools.
 
 Credential fields contain environment-variable names only. Discovery never
 reads those variables or makes a network request.

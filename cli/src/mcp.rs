@@ -38,7 +38,8 @@ const MAX_IMAGE_BYTES: u64 = 5 * 1024 * 1024;
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub struct ObserveParams {
-    /// Path of a local video file
+    /// Path of a local video file. A relative path resolves against the server's working
+    /// directory, which is the folder the client started it in (usually the project folder).
     pub video: String,
     /// Capability ids such as ["probe","scenes","stats"]; the resolver adds technical dependencies. Give exactly one of capabilities, strategy, or plan.
     #[serde(default)]
@@ -92,7 +93,8 @@ pub struct QueryParams {
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub struct SampleParams {
-    /// Path of a local video file; remote URLs and playlists are refused
+    /// Path of a local video file; remote URLs and playlists are refused. A relative path
+    /// resolves against the server's working directory (usually the project folder).
     pub video: String,
     /// New evidence directory; default is a new directory under the evidence root. Existing directories are never overwritten.
     #[serde(default)]
