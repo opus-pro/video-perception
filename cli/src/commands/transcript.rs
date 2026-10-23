@@ -197,26 +197,33 @@ impl CapabilityProvider for WhisperCppProvider {
         ProviderDescriptor {
             id: "whisper-cpp",
             locality: Locality::Local,
-            model: nonempty_env("WHISPER_CPP_MODEL"),
+            model: whisper_paths().ok().map(|(_, model)| model),
             timing: Some("aligned"),
         }
     }
 
     fn availability(&self) -> Result<(), String> {
-        let bin = nonempty_env("WHISPER_CPP_BIN").ok_or("WHISPER_CPP_BIN not set")?;
-        let model = nonempty_env("WHISPER_CPP_MODEL").ok_or("WHISPER_CPP_MODEL not set")?;
-        if !tool_exists(&bin) && !Path::new(&bin).is_file() {
-            return Err(format!("whisper.cpp binary not found: {bin}"));
-        }
-        if !Path::new(&model).is_file() {
-            return Err(format!("whisper.cpp model not found: {model}"));
-        }
-        Ok(())
+        whisper_paths().map(|_| ())
     }
 
     fn execute(&self, request: &TranscriptRequest) -> Result<TranscriptPayload, String> {
-        whisper_from_env(&request.video, request.lang.as_deref())
+        run_whisper(&request.video, request.lang.as_deref())
     }
+}
+
+/// The whisper.cpp binary and model, resolved by the built-in catalog's
+/// `detect` checks: WHISPER_CPP_BIN / WHISPER_CPP_MODEL first, then PATH and
+/// the usual model folders.
+fn whisper_paths() -> Result<(String, String), String> {
+    let evaluation = crate::detect::evaluate_builtin("whisper-cpp")
+        .ok_or("whisper-cpp is missing from the built-in provider catalog")?;
+    let bin = evaluation
+        .resolved("whisper-binary")
+        .ok_or("whisper.cpp binary not found; install whisper.cpp or set WHISPER_CPP_BIN")?;
+    let model = evaluation.resolved("whisper-model").ok_or(
+        "whisper.cpp model not found; put a ggml model in ~/.local/share/whisper/ or set WHISPER_CPP_MODEL",
+    )?;
+    Ok((bin.to_string(), model.to_string()))
 }
 
 fn apple_speech_bin() -> String {
@@ -243,9 +250,8 @@ fn tool_exists(name: &str) -> bool {
         .unwrap_or(false)
 }
 
-fn whisper_from_env(video: &str, lang: Option<&str>) -> Result<TranscriptPayload, String> {
-    let bin = nonempty_env("WHISPER_CPP_BIN").ok_or("WHISPER_CPP_BIN not set")?;
-    let model = nonempty_env("WHISPER_CPP_MODEL").ok_or("WHISPER_CPP_MODEL not set")?;
+fn run_whisper(video: &str, lang: Option<&str>) -> Result<TranscriptPayload, String> {
+    let (bin, model) = whisper_paths()?;
 
     // Every intermediate file lives in a directory only this user can reach,
     // so a predictable name in the shared temp directory cannot be planted.

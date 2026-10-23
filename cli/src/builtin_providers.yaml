@@ -1,0 +1,186 @@
+# Built-in provider catalog. Each entry is a video-perception.provider/v1
+# manifest whose `detect` block says, with read-only checks, whether it can
+# run on this machine. `capabilities` evaluates every entry and reports the
+# result as the machine's index. Native entries are run by Video Perception;
+# external entries are tools the agent calls itself, as `usage` describes.
+#
+# Users and projects add entries the same way under their extension roots.
+
+- contract: video-perception.provider/v1
+  id: whisper-cpp
+  version: 1.0.0
+  description: Local timestamped speech transcription with whisper.cpp.
+  locality: local
+  media_transfer: never
+  runtime: { type: native }
+  capabilities:
+    - { id: transcript, contract: video-perception.transcript/v1 }
+  notes:
+    - Uses a user-managed model and aligned timestamps.
+    - WHISPER_CPP_BIN and WHISPER_CPP_MODEL override the paths found here.
+  detect:
+    verification: binary-and-model-files-present
+    checks:
+      - id: whisper-binary
+        command: whisper-cli
+        env: WHISPER_CPP_BIN
+        detail: whisper.cpp command-line tool
+        action: Install whisper.cpp (for example `brew install whisper-cpp`) or set WHISPER_CPP_BIN
+      - id: whisper-model
+        env: WHISPER_CPP_MODEL
+        file_globs:
+          - ~/.local/share/whisper/ggml-*.bin
+          - ~/.cache/whisper/ggml-*.bin
+          - ~/Library/Application Support/video-perception/models/ggml-*.bin
+          - /opt/homebrew/share/whisper-cpp/ggml-*.bin
+          - /usr/local/share/whisper-cpp/ggml-*.bin
+        detail: a whisper.cpp ggml model file
+        action: Download a ggml model (for example ggml-base.bin) into ~/.local/share/whisper/ or set WHISPER_CPP_MODEL
+
+- contract: video-perception.provider/v1
+  id: apple-speech
+  version: 1.0.0
+  description: macOS speech recognition through the Video Perception Apple provider host.
+  locality: local
+  media_transfer: never
+  runtime: { type: native }
+  capabilities:
+    - { id: transcript, contract: video-perception.transcript/v1 }
+  notes:
+    - Speech.framework is integrated only through the external provider host contract.
+    - Vision/OCR/saliency are planned capabilities and are not reported as available.
+  detect:
+    platforms: [macos]
+    verification: executable-present
+    missing_status: provider-host-not-installed
+    checks:
+      - id: apple-provider-host
+        command: video-perception-apple
+        env: VIDEO_PERCEPTION_APPLE_SPEECH_BIN
+        detail: video-perception-apple executable
+        action: Install the signed Apple provider host or set VIDEO_PERCEPTION_APPLE_SPEECH_BIN
+
+- contract: video-perception.provider/v1
+  id: ollama
+  version: 1.0.0
+  description: Local semantic scene observations through Ollama.
+  locality: local
+  media_transfer: never
+  runtime: { type: native }
+  capabilities:
+    - { id: semantic-visual-observation, contract: video-perception.vlm/v1 }
+  notes:
+    - The model process and storage are owned by the user-managed runtime.
+    - Run doctor before relying on a pulled model or a live Ollama service.
+  detect:
+    verification: runtime-present; model availability requires doctor
+    ready_status: runtime-installed
+    checks:
+      - id: ollama
+        command: ollama
+        detail: Ollama runtime
+        action: brew install ollama
+      - id: video-perception-vlm
+        command: video-perception-vlm
+        detail: Video Perception VLM adapter
+        action: Install the packaged video-perception-vlm adapter
+
+# ── Tools the agent calls itself ────────────────────────────────
+
+- contract: video-perception.provider/v1
+  id: tesseract-ocr
+  version: 1.0.0
+  description: Read text in a frame with the Tesseract OCR engine.
+  locality: local
+  media_transfer: never
+  runtime: { type: external }
+  usage: Extract a frame, then run `tesseract frame.png stdout`. Add `--psm 6` for a block of text.
+  capabilities:
+    - { id: ocr, contract: unspecified }
+  detect:
+    checks:
+      - id: tesseract
+        command: tesseract
+        detail: tesseract executable
+        action: Install Tesseract (for example `brew install tesseract`)
+
+- contract: video-perception.provider/v1
+  id: faster-whisper
+  version: 1.0.0
+  description: Speech transcription with the faster-whisper Python package.
+  locality: local
+  media_transfer: never
+  runtime: { type: external }
+  usage: >-
+    In Python: `from faster_whisper import WhisperModel; segments, _ = WhisperModel("base").transcribe("audio.wav", word_timestamps=True)`.
+    The first run downloads the model unless it is cached.
+  capabilities:
+    - { id: transcript, contract: unspecified }
+  detect:
+    checks:
+      - id: faster-whisper
+        python_module: faster_whisper
+        detail: faster_whisper Python package
+        action: pip install faster-whisper
+
+- contract: video-perception.provider/v1
+  id: macos-vision-ocr
+  version: 1.0.0
+  description: Read text in a frame with the macOS Vision framework.
+  locality: local
+  media_transfer: never
+  runtime: { type: external }
+  usage: >-
+    Write a short Swift script that loads the image with NSImage, runs
+    VNRecognizeTextRequest with recognitionLevel .accurate, and prints each
+    observation's topCandidates(1) string; run it with `swift ocr.swift frame.png`.
+  capabilities:
+    - { id: ocr, contract: unspecified }
+  detect:
+    platforms: [macos]
+    checks:
+      - id: swift
+        command: swift
+        detail: Swift toolchain (Xcode or Command Line Tools)
+        action: xcode-select --install
+
+- contract: video-perception.provider/v1
+  id: macos-speech
+  version: 1.0.0
+  description: Transcribe audio with the macOS Speech framework.
+  locality: local
+  media_transfer: never
+  runtime: { type: external }
+  usage: >-
+    Write a Swift script with SFSpeechRecognizer and SFSpeechURLRecognitionRequest
+    (requiresOnDeviceRecognition = true) over an extracted WAV file. The first
+    run asks the user for speech recognition permission.
+  capabilities:
+    - { id: transcript, contract: unspecified }
+  detect:
+    platforms: [macos]
+    checks:
+      - id: swift
+        command: swift
+        detail: Swift toolchain (Xcode or Command Line Tools)
+        action: xcode-select --install
+
+- contract: video-perception.provider/v1
+  id: windows-ocr
+  version: 1.0.0
+  description: Read text in a frame with the Windows.Media.Ocr engine.
+  locality: local
+  media_transfer: never
+  runtime: { type: external }
+  usage: >-
+    In PowerShell, load the frame as a SoftwareBitmap and call
+    [Windows.Media.Ocr.OcrEngine]::TryCreateFromUserProfileLanguages().RecognizeAsync().
+  capabilities:
+    - { id: ocr, contract: unspecified }
+  detect:
+    platforms: [windows]
+    checks:
+      - id: powershell
+        command: powershell
+        detail: Windows PowerShell
+        action: Use Windows PowerShell 5.1 or later

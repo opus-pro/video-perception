@@ -177,7 +177,9 @@ fn optional_provider_failure_returns_partial_observation_with_provenance() {
             "--out",
         ])
         .arg(&observation)
-        .env_remove("WHISPER_CPP_BIN")
+        // An explicit path that does not exist makes whisper.cpp unavailable on
+        // any machine; without it the usual model folders would be searched.
+        .env("WHISPER_CPP_BIN", "/nonexistent/whisper-cli")
         .env_remove("WHISPER_CPP_MODEL")
         .output()
         .expect("run optional transcript plan");
@@ -249,7 +251,7 @@ fn required_provider_failure_is_nonzero() {
             "--out",
         ])
         .arg(&observation)
-        .env_remove("WHISPER_CPP_BIN")
+        .env("WHISPER_CPP_BIN", "/nonexistent/whisper-cli")
         .env_remove("WHISPER_CPP_MODEL")
         .output()
         .expect("run required transcript plan");
@@ -493,7 +495,7 @@ fn local_only_plan_never_invokes_network_client() {
         .arg(root.join("observation"))
         .env("PATH", test_path)
         .env("VIDEO_PERCEPTION_CURL_MARKER", &marker)
-        .env_remove("WHISPER_CPP_BIN")
+        .env("WHISPER_CPP_BIN", "/nonexistent/whisper-cli")
         .env_remove("WHISPER_CPP_MODEL")
         .output()
         .expect("run local-only plan");

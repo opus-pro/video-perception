@@ -41,12 +41,20 @@ export const Scene = z.object({
   end_ms: ms,
 });
 
+/** A visual change too weak to call a cut, such as a new slide with the same
+ * layout or text appearing on an unchanged shot. Reported for inspection. */
+export const WeakChange = z.object({
+  ms,
+  score: z.number().nonnegative(),
+});
+
 export const Scenes = z.object({
   video: z.string(),
   duration_ms: ms,
   scene_count: z.number().int().positive(),
   merge_threshold_ms: ms,
   scenes: z.array(Scene),
+  weak_changes: z.array(WeakChange).default([]),
 });
 
 export type Scene = z.infer<typeof Scene>;
