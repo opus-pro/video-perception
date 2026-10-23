@@ -85,6 +85,9 @@ again.
 - whisper.cpp works without `WHISPER_CPP_BIN` and `WHISPER_CPP_MODEL` when the
   binary is on PATH and a model sits in a usual folder; the variables still
   take precedence.
+- Manifests from the checked-out project are marked `trusted: false` and their
+  `usage` is withheld from the index, so a cloned repository cannot hand the
+  agent instructions that look like the user's own configuration.
 - A Python check spawns `python3 -I` once per check. Dotted module names are
   rejected because `find_spec` would import the parent package.
 - The provider manifest schema gains optional `detect`, `usage`, and `notes`;
