@@ -1,0 +1,62 @@
+{
+  "without": {
+    "run": {
+      "agent": "claude",
+      "model": "sonnet",
+      "task": "tutorial-mention",
+      "condition": "baseline",
+      "attempt": 1
+    },
+    "en": {
+      "title": "Claude Code without the plugin",
+      "steps": [
+        "Listed the video tools on the computer.",
+        "Tried to stamp times on frames; the FFmpeg build could not draw text.",
+        "Made contact sheets and looked at them. The answer is spoken, not shown.",
+        "Searched Python packages and model caches for speech-to-text.",
+        "Created a Python environment and downloaded a speech model from the internet.",
+        "Transcribed the audio and found the sentence."
+      ]
+    },
+    "zh": {
+      "title": "Claude Code，不装插件",
+      "steps": [
+        "列出电脑上的视频工具。",
+        "想在帧上打时间戳，但这版 FFmpeg 不能绘制文字。",
+        "拼出缩略图来看，可答案是说出来的，不在画面里。",
+        "在 Python 包和模型缓存里找语音转写工具。",
+        "新建 Python 环境，从网上下载语音模型。",
+        "转写音频，找到那句话。"
+      ]
+    }
+  },
+  "with": {
+    "run": {
+      "agent": "claude",
+      "model": "sonnet",
+      "task": "tutorial-mention",
+      "condition": "plugin",
+      "attempt": 1
+    },
+    "en": {
+      "title": "Claude Code with the plugin",
+      "steps": [
+        "Checked what this computer can do.",
+        "Transcribed the video on this computer.",
+        "Searched the transcript for “Lumina”."
+      ]
+    },
+    "zh": {
+      "title": "Claude Code，装上插件",
+      "steps": [
+        "查看这台电脑能做什么。",
+        "在本机转写视频。",
+        "在转写里搜索 “Lumina”。"
+      ]
+    }
+  },
+  "note": {
+    "en": "Same question: “When do I first mention the Lumina Pro plan?” Both answers were right. Times are wall-clock for the whole run.",
+    "zh": "同一个问题：“我第一次提到 Lumina Pro 套餐是在哪里？” 两边都答对了。时间是整次运行的实际耗时。"
+  }
+}

@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Perception</title>
+<meta name="description" content="Let any coding agent watch a video: local scenes, transcript and frames, with every answer pinned to a timestamp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Atkinson+Hyperlegible+Next:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #e7eaed;
+  --panel: #f5f6f7;
+  --ink: #1a1d21;
+  --muted: #59616b;
+  --line: #c6ccd2;
+  --playhead: #e11d36;
+  --band: rgba(225, 29, 54, .14);
+  --code-bg: #1a1d21;
+  --code-ink: #e7eaed;
+  --seg-welcome: #1e3a8a;
+  --seg-pricing: #166534;
+  --seg-render: #7c2d12;
+  --seg-questions: #6b21a8;
+  --seg-thanks: #c2410c;
+  --wave: #8a939d;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15181c; --panel: #1d2126; --ink: #e7eaed; --muted: #9aa3ad; --line: #353b43;
+    --playhead: #ff4d5e; --band: rgba(255, 77, 94, .18); --code-bg: #0e1013; --code-ink: #e7eaed;
+    --wave: #6b747e; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15181c; --panel: #1d2126; --ink: #e7eaed; --muted: #9aa3ad; --line: #353b43;
+  --playhead: #ff4d5e; --band: rgba(255, 77, 94, .18); --code-bg: #0e1013; --code-ink: #e7eaed;
+  --wave: #6b747e; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 400 1.0625rem/1.6 var(--body);
+}
+a { color: inherit; text-underline-offset: .2em; }
+a:hover { color: var(--playhead); }
+:focus-visible { outline: 3px solid var(--playhead); outline-offset: 2px; border-radius: 4px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+@media (max-width: 600px) { .wrap { padding: 0 16px; } }
+
+/* top bar */
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 0; }
+.mark { font: 700 1rem/1 var(--display); font-stretch: 112%; letter-spacing: -.01em; text-decoration: none; }
+.bar nav { display: flex; gap: 20px; align-items: center; font-size: .95rem; }
+.lang { font: inherit; background: none; border: 1px solid var(--line); color: var(--ink); border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+
+/* hero */
+.hero { padding: 16px 0 8px; }
+h1 {
+  font: 800 clamp(2.3rem, 5.2vw, 4.1rem)/.98 var(--display); font-stretch: 118%;
+  letter-spacing: -.03em; margin: 0 0 18px; max-width: 18ch;
+}
+:lang(zh) h1 { font-stretch: 100%; letter-spacing: 0; line-height: 1.1; max-width: 12em; }
+.lede { font-size: 1.15rem; max-width: 60ch; margin: 0 0 22px; color: var(--muted); }
+.lede strong { color: var(--ink); font-weight: 700; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: stretch; }
+.cmd {
+  display: flex; align-items: center; gap: 12px; background: var(--code-bg); color: var(--code-ink);
+  border-radius: 10px; padding: 12px 12px 12px 16px; max-width: 100%; min-width: 0;
+}
+.cmd code { min-width: 0; font: 500 .9rem/1.4 ui-monospace, "SF Mono", Menlo, monospace; overflow-x: auto; white-space: nowrap; }
+.copy {
+  flex: none; font: 700 .85rem/1 var(--body); border: 0; border-radius: 6px; padding: 8px 12px;
+  background: var(--code-ink); color: var(--code-bg); cursor: pointer;
+}
+.ghost {
+  display: inline-flex; align-items: center; padding: 0 18px; border-radius: 10px; border: 1px solid var(--line);
+  text-decoration: none; font-weight: 700;
+}
+
+/* timeline demo */
+.demo { margin: 32px 0 24px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 24px; }
+@media (max-width: 600px) { .demo { padding: 16px; margin-top: 32px; } }
+.demo-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 24px; margin-bottom: 16px; }
+.demo-head h2 { font: 700 1.05rem/1.3 var(--display); font-stretch: 100%; margin: 0; }
+.demo-head p { margin: 0; color: var(--muted); font-size: .95rem; }
+.asks { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+.ask {
+  font: 400 .95rem/1.3 var(--body); text-align: left; color: var(--ink); background: transparent;
+  border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; cursor: pointer;
+}
+.ask:hover { border-color: var(--ink); }
+.ask[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+
+.timeline { position: relative; padding-top: 34px; }
+.ruler { position: relative; height: 18px; margin-left: 28px; font: 500 .75rem/1 var(--display); font-stretch: 75%; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ruler span { position: absolute; transform: translateX(-50%); }
+.track { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.track > b { width: 20px; flex: none; font: 700 .8rem/1 var(--display); color: var(--muted); }
+.lane { position: relative; flex: 1; height: 52px; border-radius: 6px; overflow: hidden; background: color-mix(in srgb, var(--line) 40%, transparent); }
+.lane.audio { height: 44px; }
+.seg { position: absolute; top: 0; bottom: 0; color: #fff; font: 600 .72rem/1.15 var(--display); font-stretch: 85%; padding: 6px; overflow: hidden; border-right: 2px solid var(--panel); }
+@media (max-width: 600px) { .seg { font-size: 0; padding: 0; } }
+.seg.pattern { background: repeating-linear-gradient(90deg, #d4d4d4 0 10%, #e3c900 10% 20%, #00b8c9 20% 30%, #19a03c 30% 40%, #c1268e 40% 50%, #c3271b 50% 60%, #1f2bc0 60% 70%); color: #111; }
+.seg.fractal { background: radial-gradient(circle at 30% 50%, #f59e0b, #7c2d12 40%, #1c1917 75%); }
+.seg.black { background: #000; }
+.bar-s { position: absolute; bottom: 50%; transform: translateY(50%); width: 3px; border-radius: 2px; background: var(--wave); }
+.bar-s.loud { background: var(--playhead); }
+.band { position: absolute; top: 34px; bottom: 0; margin-left: 28px; background: var(--band); border-left: 2px solid var(--playhead); border-right: 2px solid var(--playhead); opacity: 0; transition: opacity .3s; pointer-events: none; }
+.band.on { opacity: 1; }
+.head { position: absolute; top: 0; bottom: 0; width: 0; margin-left: 28px; pointer-events: none; transition: left .9s cubic-bezier(.65, 0, .35, 1); }
+.head::after { content: ""; position: absolute; top: 26px; bottom: 0; left: -1px; width: 2px; background: var(--playhead); }
+.head i {
+  position: absolute; top: 0; left: 0; transform: translateX(-50%); background: var(--playhead); color: #fff;
+  font: 700 .8rem/1 var(--display); font-stretch: 75%; font-style: normal; font-variant-numeric: tabular-nums;
+  padding: 5px 7px; border-radius: 4px; white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) { .head, .band { transition: none; } }
+
+.answer { display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); min-height: 112px; }
+.answer .tc { font: 800 clamp(2rem, 5vw, 3.2rem)/1 var(--display); font-stretch: 75%; font-variant-numeric: tabular-nums; color: var(--playhead); letter-spacing: -.01em; }
+.answer p { margin: 0; }
+.answer .say { font-size: 1.1rem; }
+.answer .how { color: var(--muted); font-size: .92rem; margin-top: 4px; }
+.thumb { width: 168px; aspect-ratio: 16/9; border-radius: 6px; display: grid; place-items: center; text-align: center; color: #fff; font: 700 .7rem/1.25 var(--display); padding: 8px; }
+.thumb em { display: block; color: #fde047; font-style: normal; font-size: .78rem; margin-top: 6px; }
+.answer-body { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+@media (max-width: 600px) { .answer { grid-template-columns: 1fr; gap: 12px; } .thumb { width: 140px; } }
+
+/* sections */
+section { padding: 72px 0; }
+section + section { border-top: 1px solid var(--line); }
+h2.big { font: 800 clamp(1.9rem, 4.4vw, 3rem)/1.05 var(--display); font-stretch: 110%; letter-spacing: -.02em; margin: 0 0 20px; max-width: 20ch; }
+:lang(zh) h2.big { font-stretch: 100%; letter-spacing: 0; line-height: 1.2; }
+.prose { max-width: 62ch; }
+.prose p { margin: 0 0 16px; }
+
+.versus { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 32px; }
+@media (max-width: 760px) { .versus { grid-template-columns: 1fr; } }
+.run { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+.run h3 { font: 700 1.05rem/1.3 var(--display); margin: 0 0 4px; }
+.run .clock { font: 800 2.2rem/1 var(--display); font-stretch: 75%; font-variant-numeric: tabular-nums; margin: 12px 0; }
+.run.with .clock { color: var(--playhead); }
+.run ol { margin: 0; padding-left: 1.2em; color: var(--muted); }
+.run li { margin: 4px 0; }
+.note { color: var(--muted); font-size: .92rem; margin-top: 16px; max-width: 70ch; }
+
+table { width: 100%; border-collapse: collapse; margin-top: 28px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 12px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 700 .9rem/1.3 var(--display); color: var(--muted); }
+.num { font: 700 1.15rem/1.3 var(--display); font-stretch: 85%; }
+caption { caption-side: bottom; text-align: left; color: var(--muted); font-size: .9rem; padding-top: 10px; }
+td .sub { color: var(--muted); font-size: .88rem; }
+.table-scroll { overflow-x: auto; }
+
+.steps { list-style: none; padding: 0; margin: 32px 0 0; display: grid; gap: 28px; max-width: 760px; counter-reset: step; }
+.steps > li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 16px; counter-increment: step; }
+.steps > li::before { content: counter(step); font: 800 1.6rem/1 var(--display); font-stretch: 75%; color: var(--playhead); }
+.steps h3 { margin: 0 0 8px; font: 700 1.15rem/1.3 var(--display); }
+.steps p { margin: 0 0 10px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.tab { font: 400 .9rem/1 var(--body); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+pre.block { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; overflow-x: auto; margin: 0; font: 500 .88rem/1.55 ui-monospace, "SF Mono", Menlo, monospace; }
+.panel-note { color: var(--muted); font-size: .9rem; margin-top: 8px; }
+
+.builders { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: start; }
+@media (max-width: 760px) { .builders { grid-template-columns: 1fr; } }
+.facts { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+.facts li { padding-left: 18px; border-left: 3px solid var(--line); }
+.facts strong { display: block; }
+
+footer { padding: 40px 0 56px; color: var(--muted); font-size: .92rem; border-top: 1px solid var(--line); }
+footer p { margin: 0 0 8px; max-width: 70ch; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="bar">
+    <a class="mark" href="#top">Video Perception</a>
+    <nav>
+      <a href="#install" data-i18n="nav.install">Install</a>
+      <a href="https://github.com/opus-pro/video-perception">GitHub</a>
+      <button class="lang" type="button" id="lang" aria-label="Switch language">中文</button>
+    </nav>
+  </header>
+
+  <main id="top">
+    <div class="hero">
+      <h1 data-i18n="hero.title">Your agent can watch the video now.</h1>
+      <p class="lede" data-i18n-html="hero.lede">Ask about any moment in a video. Your coding agent answers with <strong>the second it happens</strong> and the frame or sentence that proves it, all on your own computer.</p>
+      <div class="cta">
+        <div class="cmd"><code id="install-cmd">curl -fsSL https://raw.githubusercontent.com/opus-pro/video-perception/main/install.sh | sh</code><button class="copy" type="button" data-copy="install-cmd" data-i18n="copy">Copy</button></div>
+      </div>
+    </div>
+
+    <div class="demo" aria-labelledby="demo-title">
+      <div class="demo-head">
+        <h2 id="demo-title" data-i18n="demo.title">Ask about the 92-second test video</h2>
+        <p data-i18n="demo.sub">The video and answers come from our public evaluation.</p>
+      </div>
+      <div class="asks" role="group" aria-label="Questions" id="asks"></div>
+      <div class="timeline" id="timeline">
+        <div class="ruler" id="ruler" aria-hidden="true"></div>
+        <div class="track"><b aria-hidden="true">V</b><div class="lane" id="lane-v" aria-hidden="true"></div></div>
+        <div class="track"><b aria-hidden="true">A</b><div class="lane audio" id="lane-a" aria-hidden="true"></div></div>
+        <div class="band" id="band" aria-hidden="true"></div>
+        <div class="head" id="head" aria-hidden="true"><i id="head-tc">0:00.0</i></div>
+      </div>
+      <div class="answer" aria-live="polite">
+        <div class="tc" id="ans-tc">0:43.5</div>
+        <div class="answer-body">
+          <div class="thumb" id="ans-thumb" hidden></div>
+          <div><p class="say" id="ans-say"></p><p class="how" id="ans-how"></p></div>
+        </div>
+      </div>
+    </div>
+
+    <section aria-labelledby="why">
+      <h2 class="big" id="why" data-i18n="why.title">You shouldn't need to know how video works.</h2>
+      <div class="prose">
+        <p data-i18n="why.p1">People who build video workflows with an agent usually never learned FFmpeg, speech-to-text, or frame sampling. They copy a setup someone shared and hope the agent figures out the rest.</p>
+        <p data-i18n="why.p2">A strong agent usually works it out, after a detour. In our test, Claude Code without the plugin built a Python environment and downloaded a speech model before it could answer. Codex without it got two spoken-word questions wrong, guessing from the slides. Video Perception gives the agent a practiced way to look and listen, so it goes straight to the method that works.</p>
+      </div>
+      <div class="versus" id="versus"></div>
+      <p class="note" id="versus-note"></p>
+    </section>
+
+    <section aria-labelledby="results">
+      <h2 class="big" id="results" data-i18n="results.title">Same agent, same computer, one plugin apart.</h2>
+      <div class="prose"><p data-i18n="results.p">Eight everyday questions with exact answers: find a sentence, read a code on screen, find the dead air, spot a black screen, count the cuts. Each agent ran every question twice without the plugin and twice with it. With the plugin every agent answered all of them. Spoken and long-video questions got 2 to 18 times faster. Quick checks cost a few seconds on some agents and got faster on DeepSeek Harness.</p></div>
+      <div class="table-scroll"><table id="results-table"></table></div>
+      <p class="note" data-i18n-html="results.note">Prompts, videos, grading and every agent's commands are in <a href="https://github.com/opus-pro/video-perception/tree/main/evals/perception">evals/perception</a>. Run it yourself on your own agent.</p>
+    </section>
+
+    <section id="install" aria-labelledby="install-title">
+      <h2 class="big" id="install-title" data-i18n="install.title">Set it up in three steps.</h2>
+      <ol class="steps">
+        <li>
+          <div>
+            <h3 data-i18n="s1.title">Install the tool</h3>
+            <p data-i18n="s1.p">It needs FFmpeg. On a Mac with Homebrew, run the first line too.</p>
+            <pre class="block">brew install ffmpeg imagemagick whisper-cpp
+curl -fsSL https://raw.githubusercontent.com/opus-pro/video-perception/main/install.sh | sh
+video-perception setup --profile basic</pre>
+            <p class="panel-note" data-i18n="s1.note">The last command only checks your computer and tells you what is missing. It never installs anything.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h3 data-i18n="s2.title">Add it to your agent</h3>
+            <div class="tabs" role="tablist" id="hosts"></div>
+            <pre class="block" id="host-cmd"></pre>
+            <p class="panel-note" id="host-note"></p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h3 data-i18n="s3.title">Ask about a video</h3>
+            <p data-i18n="s3.p">Use plain words. You don't have to name a tool or a method.</p>
+            <pre class="block" data-i18n="s3.example">Find every place I mention pricing in demo.mp4, then list the pauses longer than three seconds.</pre>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section aria-labelledby="builders">
+      <div class="builders">
+        <div>
+          <h2 class="big" id="builders" data-i18n="b.title">Building a video tool on top of an agent?</h2>
+          <div class="prose">
+            <p data-i18n="b.p">If your users ask an agent to cut, caption or review their footage, the agent first has to understand it. Call Video Perception instead of writing that layer yourself.</p>
+          </div>
+        </div>
+        <ul class="facts">
+          <li><strong data-i18n="f1.t">MCP server and command line</strong><span data-i18n="f1.d">One local binary serves both, so any agent or script can call it.</span></li>
+          <li><strong data-i18n="f2.t">Results you can build on</strong><span data-i18n="f2.d">A documented JSON format with timestamps and where each fact came from.</span></li>
+          <li><strong data-i18n="f3.t">No model vendor required</strong><span data-i18n="f3.d">Local tools by default. Your users pick any speech or vision model they already run.</span></li>
+          <li><strong data-i18n="f4.t">MIT licensed</strong><span data-i18n="f4.d">Bundle it, fork it, or ship it inside your own plugin.</span></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p data-i18n="foot.privacy">Video Perception runs on your computer and collects no telemetry. Your media stays local unless you choose a remote model yourself.</p>
+    <p><a href="https://github.com/opus-pro/video-perception">github.com/opus-pro/video-perception</a> <span data-i18n="foot.license">MIT license</span></p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var DURATION = 92;
+  var SEGMENTS = [
+    { s: 0, e: 12, cls: "", color: "var(--seg-welcome)", en: "Welcome", zh: "开场" },
+    { s: 12, e: 24, cls: "pattern", en: "Demo", zh: "演示" },
+    { s: 24, e: 36, cls: "", color: "var(--seg-pricing)", en: "Pricing", zh: "价格" },
+    { s: 36, e: 50, cls: "fractal", en: "Rendering", zh: "渲染" },
+    { s: 50, e: 70, cls: "", color: "var(--seg-questions)", en: "Questions", zh: "问答" },
+    { s: 70, e: 73, cls: "black", en: "", zh: "" },
+    { s: 73, e: 92, cls: "", color: "var(--seg-thanks)", en: "Thanks", zh: "结尾" }
+  ];
+  var SPEECH = [[1.0, 4.336], [6.5, 10.086], [12.5, 16.356], [18.5, 20.889], [24.5, 27.931], [30.0, 32.787], [36.5, 39.735], [43.5, 46.476], [50.0, 52.4], [66.0, 68.102], [70.5, 72.179], [75.5, 78.026], [80.5, 82.564], [87.5, 88.208]];
+  var SPIKE = [85.0, 85.6];
+
+  var ASKS = [
+    { id: "mention", at: 43.5,
+      en: { q: "When do I first mention the Lumina Pro plan?", say: "“The new Lumina Pro plan includes unlimited exports.”", how: "Found in the transcript, which was made on this computer." },
+      zh: { q: "我第一次提到 Lumina Pro 套餐是在哪里？", say: "“The new Lumina Pro plan includes unlimited exports.”", how: "来自在本机生成的语音转写。" } },
+    { id: "code", at: 26.0, thumb: "code",
+      en: { q: "What discount code is shown on screen?", say: "KESTREL-42, visible from 0:26 to 0:33.", how: "Read from a frame the agent opened and looked at." },
+      zh: { q: "画面上显示的折扣码是什么？", say: "KESTREL-42，从 0:26 显示到 0:33。", how: "agent 打开并查看了这一帧画面。" } },
+    { id: "dead", at: 52.4, end: 66.0,
+      en: { q: "Is there a long stretch where nobody talks?", say: "13.6 seconds of silence, from 0:52.4 to 1:06.0.", how: "Measured from the audio track, not guessed from frames." },
+      zh: { q: "有没有很长一段没人说话？", say: "从 0:52.4 到 1:06.0，静音 13.6 秒。", how: "从音轨测量得出，不是看画面猜的。" } },
+    { id: "black", at: 70.0, end: 73.0, thumb: "black",
+      en: { q: "Any black screens before I upload?", say: "One, from 1:10.0 to 1:13.0. Nothing else.", how: "Every frame was checked, not a sample." },
+      zh: { q: "上传前检查一下，有没有黑屏？", say: "只有一处，从 1:10.0 到 1:13.0。", how: "检查了每一帧，不是抽样。" } },
+    { id: "spike", at: 85.0,
+      en: { q: "Any sudden noise that would hurt viewers' ears?", say: "A beep at 1:25.0 peaks at −0.2 dB. Speech peaks near −11 dB.", how: "Measured loudness, with the timestamp." },
+      zh: { q: "有没有会刺痛耳朵的突然噪音？", say: "1:25.0 有一声蜂鸣，峰值 −0.2 dB，语音峰值约 −11 dB。", how: "测量出的响度，附带时间点。" } }
+  ];
+
+  var HOSTS = [
+    { id: "claude", label: "Claude Code",
+      cmd: "claude plugin marketplace add opus-pro/video-perception\nclaude plugin install video-perception@video-perception",
+      en: "Restart Claude Code after installing. The skill loads by itself when you mention a video.",
+      zh: "安装后重启 Claude Code。提到视频时，技能会自动加载。" },
+    { id: "codex", label: "Codex",
+      cmd: "codex plugin marketplace add opus-pro/video-perception\ncodex plugin add video-perception@video-perception",
+      en: "Start a new Codex session after installing. The skill loads by itself when you mention a video.",
+      zh: "安装后开启一个新的 Codex 会话。提到视频时，技能会自动加载。" },
+    { id: "dsh", label: "DeepSeek Harness",
+      cmd: "curl -fsSLO https://github.com/opus-pro/video-perception/releases/download/v0.3.0/video-perception-dsh-plugin-0.3.0.tgz\ndsh plugin --profile tui allow-version video-perception-dsh-plugin@0.3.0 --dsh-version \"$(dsh --version)\" --accept-risk\ndsh plugin --profile tui add ./video-perception-dsh-plugin-0.3.0.tgz",
+      en: "The allow-version line is needed until DeepSeek Harness lists this plugin version as tested.",
+      zh: "在 DeepSeek Harness 把这个插件版本列为已测试之前，需要先运行 allow-version 这一行。" },
+    { id: "mcp", label: "Any MCP client",
+      cmd: "{\n  \"mcpServers\": {\n    \"video-perception\": { \"command\": \"video-perception\", \"args\": [\"mcp\"] }\n  }\n}",
+      en: "Add this to your client's MCP settings. It runs locally over stdio.",
+      zh: "把这段加进客户端的 MCP 设置。它通过 stdio 在本地运行。" }
+  ];
+
+  var T = {
+    en: { "copied": "Copied" },
+    zh: {
+      "nav.install": "安装",
+      "hero.title": "你的 agent 现在能看视频了。",
+      "hero.lede": "问视频里的任何一个时刻。你的 coding agent 会告诉你<strong>发生在第几秒</strong>，并给出能证明它的画面或原话，全部在你自己的电脑上完成。",
+      "copy": "复制", "copied": "已复制",
+      "demo.title": "试着问问这段 92 秒的测试视频",
+      "demo.sub": "视频和答案都来自我们公开的评测。",
+      "why.title": "你不需要懂视频是怎么回事。",
+      "why.p1": "用 agent 搭视频工作流的人，大多没学过 FFmpeg、语音转写或者抽帧。他们照着别人分享的配置装好，希望 agent 自己搞定剩下的。",
+      "why.p2": "能力强的 agent 通常能绕一圈自己做到。在我们的测试里，没装插件的 Claude Code 先建了一个 Python 环境、从网上下载语音模型，才答出来。没装插件的 Codex 有两道语音题答错了，它是照着幻灯片猜的。Video Perception 给 agent 一套练熟的看和听的方法，让它直接用对的办法。",
+      "results.title": "同一个 agent，同一台电脑，只差一个插件。",
+      "results.p": "八个日常问题，每个都有确切答案：找一句话、读屏幕上的码、找出冷场、发现黑屏、数剪辑点。每个 agent 不装插件和装插件各把每道题跑两次。装上插件后，每个 agent 都全部答对。语音和长视频里的问题快了 2 到 18 倍。简单检查在部分 agent 上会多花几秒，在 DeepSeek Harness 上反而更快。",
+      "results.note": "提示词、视频、打分规则和每个 agent 执行过的命令都在 <a href=\"https://github.com/opus-pro/video-perception/tree/main/evals/perception\">evals/perception</a>。你也可以拿自己的 agent 跑一遍。",
+      "install.title": "三步装好。",
+      "s1.title": "安装工具", "s1.p": "它需要 FFmpeg。Mac 上有 Homebrew 的话，先运行第一行。",
+      "s1.note": "最后一条命令只检查你的电脑缺什么，不会安装任何东西。",
+      "s2.title": "接入你的 agent",
+      "s3.title": "问一个关于视频的问题", "s3.p": "用大白话就行，不用说出任何工具或方法。",
+      "s3.example": "找出 demo.mp4 里我提到价格的所有地方，再列出超过三秒的停顿。",
+      "b.title": "在 agent 之上做视频工具？",
+      "b.p": "如果你的用户让 agent 剪辑、加字幕或审片，agent 得先看懂素材。直接调用 Video Perception，不用自己写这一层。",
+      "f1.t": "MCP 服务和命令行", "f1.d": "同一个本地程序同时提供两者，任何 agent 或脚本都能调用。",
+      "f2.t": "可以直接拿来用的结果", "f2.d": "有文档的 JSON 格式，带时间戳，并注明每条结论的来源。",
+      "f3.t": "不绑定模型厂商", "f3.d": "默认只用本地工具。你的用户可以接入自己已有的任何语音或视觉模型。",
+      "f4.t": "MIT 协议", "f4.d": "可以打包、分叉，也可以放进你自己的插件里发布。",
+      "foot.privacy": "Video Perception 在你的电脑上运行，不收集任何遥测数据。除非你自己选择远程模型，媒体文件不会离开本机。",
+      "foot.license": "MIT 协议"
+    }
+  };
+
+  var lang = "en";
+  try { if (localStorage.getItem("vp-lang") === "zh") lang = "zh"; } catch (e) {}
+  if (lang === "en" && /^zh/i.test(navigator.language || "")) {
+    try { if (!localStorage.getItem("vp-lang")) lang = "zh"; } catch (e) { lang = "zh"; }
+  }
+  var originals = {};
+  document.querySelectorAll("[data-i18n],[data-i18n-html]").forEach(function (el) {
+    var key = el.getAttribute("data-i18n") || el.getAttribute("data-i18n-html");
+    originals[key] = el.hasAttribute("data-i18n-html") ? el.innerHTML : el.textContent;
+  });
+  function tr(key) { return T[lang][key] || originals[key] || key; }
+
+  function pct(t) { return (t / DURATION * 100) + "%"; }
+  function tc(t) {
+    var m = Math.floor(t / 60), s = (t - m * 60);
+    return m + ":" + (s < 10 ? "0" : "") + s.toFixed(1);
+  }
+
+  var ruler = document.getElementById("ruler");
+  for (var t = 0; t <= 90; t += 15) {
+    var span = document.createElement("span");
+    span.style.left = pct(t);
+    span.textContent = tc(t).replace(/\.0$/, "");
+    ruler.appendChild(span);
+  }
+  var laneV = document.getElementById("lane-v");
+  SEGMENTS.forEach(function (seg) {
+    var d = document.createElement("div");
+    d.className = "seg " + seg.cls;
+    d.style.left = pct(seg.s);
+    d.style.width = pct(seg.e - seg.s);
+    if (seg.color) d.style.background = seg.color;
+    d.dataset.en = seg.en; d.dataset.zh = seg.zh;
+    laneV.appendChild(d);
+  });
+  var laneA = document.getElementById("lane-a");
+  var seed = 7;
+  function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+  SPEECH.forEach(function (span) {
+    for (var x = span[0]; x < span[1]; x += 0.45) {
+      var b = document.createElement("div");
+      b.className = "bar-s";
+      b.style.left = pct(x);
+      b.style.height = (22 + rnd() * 48) + "%";
+      laneA.appendChild(b);
+    }
+  });
+  for (var x = SPIKE[0]; x < SPIKE[1]; x += 0.2) {
+    var s = document.createElement("div");
+    s.className = "bar-s loud";
+    s.style.left = pct(x);
+    s.style.height = "96%";
+    laneA.appendChild(s);
+  }
+
+  var head = document.getElementById("head"), headTc = document.getElementById("head-tc");
+  var band = document.getElementById("band"), timeline = document.getElementById("timeline");
+  var asks = document.getElementById("asks");
+  var current = ASKS[0];
+
+  function placeOverlays() {
+    var lane = laneV.getBoundingClientRect(), box = timeline.getBoundingClientRect();
+    var offset = lane.left - box.left, width = lane.width;
+    head.style.marginLeft = "0";
+    band.style.marginLeft = "0";
+    head.style.left = (offset + current.at / DURATION * width) + "px";
+    if (current.end) {
+      band.style.left = (offset + current.at / DURATION * width) + "px";
+      band.style.width = ((current.end - current.at) / DURATION * width) + "px";
+      band.classList.add("on");
+    } else {
+      band.classList.remove("on");
+    }
+  }
+
+  function thumbFor(kind) {
+    var el = document.getElementById("ans-thumb");
+    if (!kind) { el.hidden = true; return; }
+    el.hidden = false;
+    if (kind === "code") {
+      el.style.background = "var(--seg-pricing)";
+      el.innerHTML = "Pricing<em>Discount code: KESTREL-42</em>";
+    } else {
+      el.style.background = "#000";
+      el.innerHTML = "";
+    }
+  }
+
+  function show(ask, first) {
+    current = ask;
+    asks.querySelectorAll(".ask").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.id === ask.id ? "true" : "false"); });
+    var text = ask[lang];
+    document.getElementById("ans-tc").textContent = ask.end ? tc(ask.at) + "–" + tc(ask.end) : tc(ask.at);
+    document.getElementById("ans-say").textContent = text.say;
+    document.getElementById("ans-how").textContent = text.how;
+    headTc.textContent = tc(ask.at);
+    thumbFor(ask.thumb);
+    if (first) {
+      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var target = ask;
+      current = { at: 0 };
+      placeOverlays();
+      current = target;
+      if (reduce) { placeOverlays(); } else { requestAnimationFrame(function () { requestAnimationFrame(placeOverlays); }); }
+    } else {
+      placeOverlays();
+    }
+  }
+
+  function renderAsks() {
+    asks.innerHTML = "";
+    ASKS.forEach(function (ask) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "ask"; b.dataset.id = ask.id;
+      b.textContent = ask[lang].q;
+      b.addEventListener("click", function () { show(ask, false); });
+      asks.appendChild(b);
+    });
+  }
+
+  var hostsEl = document.getElementById("hosts"), hostCmd = document.getElementById("host-cmd"), hostNote = document.getElementById("host-note");
+  var currentHost = HOSTS[0];
+  function renderHosts() {
+    hostsEl.innerHTML = "";
+    HOSTS.forEach(function (h) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "tab"; b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", h === currentHost ? "true" : "false");
+      b.textContent = h.label;
+      b.addEventListener("click", function () { currentHost = h; renderHosts(); });
+      hostsEl.appendChild(b);
+    });
+    hostCmd.textContent = currentHost.cmd;
+    hostNote.textContent = currentHost[lang];
+  }
+
+  function applyLang() {
+    document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+    document.querySelectorAll("[data-i18n]").forEach(function (el) { el.textContent = tr(el.getAttribute("data-i18n")); });
+    document.querySelectorAll("[data-i18n-html]").forEach(function (el) { el.innerHTML = tr(el.getAttribute("data-i18n-html")); });
+    laneV.querySelectorAll(".seg").forEach(function (d) { d.textContent = d.dataset[lang]; });
+    document.getElementById("lang").textContent = lang === "zh" ? "English" : "中文";
+    renderAsks(); renderHosts();
+    if (window.renderResults) window.renderResults(lang);
+    show(current, false);
+  }
+
+  document.getElementById("lang").addEventListener("click", function () {
+    lang = lang === "zh" ? "en" : "zh";
+    try { localStorage.setItem("vp-lang", lang); } catch (e) {}
+    applyLang();
+  });
+
+  document.querySelectorAll("[data-copy]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = document.getElementById(btn.getAttribute("data-copy")).textContent;
+      var done = function () { btn.textContent = tr("copied"); setTimeout(function () { btn.textContent = tr("copy"); }, 1600); };
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+    });
+  });
+
+  window.addEventListener("resize", placeOverlays);
+  applyLang();
+  show(ASKS[0], true);
+})();
+</script>
+<script src="results.js"></script>
+</body>
+</html>
