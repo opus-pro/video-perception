@@ -11,10 +11,10 @@
     "quick_s": 15
    },
    "plugin": {
-    "passed": 14,
+    "passed": 16,
     "total": 16,
-    "long_s": 28,
-    "quick_s": 24
+    "long_s": 22,
+    "quick_s": 27
    }
   },
   {
@@ -26,10 +26,10 @@
     "quick_s": 23
    },
    "plugin": {
-    "passed": 15,
+    "passed": 16,
     "total": 16,
-    "long_s": 19,
-    "quick_s": 31
+    "long_s": 23,
+    "quick_s": 23
    }
   },
   {
@@ -43,8 +43,8 @@
    "plugin": {
     "passed": 16,
     "total": 16,
-    "long_s": 64,
-    "quick_s": 60
+    "long_s": 78,
+    "quick_s": 39
    }
   },
   {
@@ -56,10 +56,10 @@
     "quick_s": 132
    },
    "plugin": {
-    "passed": 15,
+    "passed": 16,
     "total": 16,
-    "long_s": 139,
-    "quick_s": 82
+    "long_s": 215,
+    "quick_s": 74
    }
   }
  ],
@@ -108,22 +108,20 @@
    "en": {
     "title": "Claude Code with the plugin",
     "steps": [
-     "Loaded the video skill.",
      "Checked what this computer can do.",
-     "Transcribed the video locally.",
+     "Transcribed the video on this computer.",
      "Searched the transcript for “Lumina”."
     ]
    },
    "zh": {
     "title": "Claude Code，装上插件",
     "steps": [
-     "加载视频技能。",
      "查看这台电脑能做什么。",
-     "在本地转写视频。",
+     "在本机转写视频。",
      "在转写里搜索 “Lumina”。"
     ]
    },
-   "seconds": 25,
+   "seconds": 20,
    "passed": true
   },
   "note": {

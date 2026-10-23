@@ -95,43 +95,47 @@ or failed, and the shell commands the agent ran. Local paths are replaced with
 
 Runs: Claude Code with Sonnet and with Haiku, Codex with its default model, and
 DeepSeek Harness with its default `deepseek-flash` model, 16 runs per condition
-each. The full table is in
+each. Baseline runs are from October 18 to 22. Plugin runs are from October 24
+and use the capability-contract plugin (decision 0005): a thin Skill, an index
+of the machine's capabilities, and the scene detection fix. The baseline did
+not change between the two dates, so it was not rerun. The full table is in
 [`results/summary.md`](results/summary.md), and every run's answer, grade and
 shell commands are in [`results/graded.jsonl`](results/graded.jsonl).
 
 | Agent | Right answers, without and with | Spoken or long-video questions, median time | Quick checks, median time |
 |---|---|---|---|
-| Claude Code, Sonnet | 16/16 and 14/16 | 109 s and 28 s | 15 s and 24 s |
-| Claude Code, Haiku | 16/16 and 15/16 | 412 s and 19 s | 23 s and 31 s |
-| Codex | 14/16 and 16/16 | 164 s and 64 s | 32 s and 60 s |
-| DeepSeek Harness, Flash | 15/16 and 15/16 | 503 s and 139 s | 132 s and 82 s |
+| Claude Code, Sonnet | 16/16 and 16/16 | 109 s and 22 s | 15 s and 27 s |
+| Claude Code, Haiku | 16/16 and 16/16 | 412 s and 23 s | 23 s and 23 s |
+| Codex | 14/16 and 16/16 | 164 s and 78 s | 32 s and 39 s |
+| DeepSeek Harness, Flash | 15/16 and 16/16 | 503 s and 215 s | 132 s and 74 s |
 
 What we learned:
 
-- On a machine where FFmpeg and whisper.cpp are already installed, all three
-  agents usually find the answer without the plugin. Without it they improvise:
-  Claude Code built a Python environment and downloaded a speech model, and
-  Codex guessed two spoken-word answers from the slides.
-- The plugin helps most when the answer is spoken or sits in a long video. On
-  Claude Code and Codex it costs a few seconds on quick checks such as black
-  frames or a loud spike. DeepSeek Harness, the slowest agent without it, got
-  faster on every kind of question; without the plugin one of its runs hit the
+- With the plugin every agent answered every question. Without it Codex
+  guessed two spoken answers from the slides, and one DeepSeek run hit the
   15-minute limit with no answer.
-- The plugin made counting cuts worse. Its scene detector reports false
-  boundaries on static slides and counts text overlays as cuts, and agents
-  trusted that count.
+- Spoken and long-video questions got 2 to 18 times faster. Without the plugin
+  the agents spent 35 to 47 percent of their commands on these questions
+  finding out what was installed; the capability index answers that at once.
+- Quick checks such as black frames or a loud spike cost Haiku nothing, got
+  faster for DeepSeek Harness, and still cost Sonnet and Codex 7 to 12
+  seconds.
+- An earlier plugin version, a procedure the agent had to follow, made counting
+  cuts worse and slowed quick checks more. That is why the plugin became a
+  capability contract.
 
 Known measurement noise:
 
-- A few runs in both conditions last about 12 minutes because the agent started
-  a `find /` search for the video's absolute path. Claude Code's headless mode
-  moves it to the background and waits for it before exiting. Medians are
-  barely affected.
-- The first Codex run had account-level apps enabled. In three baseline runs
-  Codex uploaded the video to a remote video service and answered from there.
-  Those runs were discarded and all 32 Codex runs were repeated with
-  `apps = false`.
+- In earlier runs some agents searched the whole disk for the video's path, and
+  Claude Code's headless mode waited for that search before exiting. The plugin
+  now says relative paths work; no plugin run in the final round took longer
+  than 179 seconds. Four baseline runs, three Haiku and one Sonnet, still
+  show the delay.
+- The first Codex baseline had account-level apps enabled. In three runs Codex
+  uploaded the video to a remote video service and answered from there. Those
+  runs were discarded and the Codex baseline was repeated with `apps = false`.
 
 DeepSeek Harness prints only its final answer in headless mode, so the
 summary's "Used Video Perception" column reads 0 for it even in the plugin
-condition.
+condition. Claude Code used the plugin in about half of its runs because the
+Skill tells it to run quick checks with FFmpeg directly.
