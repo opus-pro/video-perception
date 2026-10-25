@@ -83,7 +83,7 @@ jobs:
           echo "ASSET=${ASSET}" >> "$GITHUB_ENV"
 
       - name: Upload artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ env.ASSET }}
           path: |
@@ -106,7 +106,7 @@ jobs:
         run: pip install build && cd tools/${{ matrix.tool }} && python -m build --wheel
 
       - name: Upload wheel
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: wheel-${{ matrix.tool }}
           path: tools/${{ matrix.tool }}/dist/*.whl
@@ -131,7 +131,7 @@ jobs:
         run: mkdir -p dist && npm pack --pack-destination dist
 
       - name: Upload package
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dsh-plugin
           path: integrations/deepseek-harness/dist/*.tgz
@@ -161,7 +161,7 @@ jobs:
       # Keep the assembled assets even if the next step cannot reach the GitHub
       # API from this runner; scripts/publish-release.sh publishes them.
       - name: Upload assembled assets
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-assets
           path: release/
