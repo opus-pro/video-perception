@@ -32,6 +32,14 @@ pub struct ProviderManifest {
     pub capabilities: Vec<ProviderCapability>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub license: Option<String>,
+    /// Read-only checks that say whether this provider can run on the current machine.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detect: Option<crate::detect::Detect>,
+    /// For `external` runtimes: how the agent invokes the tool itself.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub usage: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub notes: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -450,6 +458,21 @@ fn discover() -> Result<DiscoveryReport, String> {
     })
 }
 
+/// Every valid provider manifest in the extension roots, with its root's source.
+pub fn discovered_providers() -> Vec<(ProviderManifest, String)> {
+    discovered_manifests()
+        .map(|(found, _)| {
+            found
+                .into_iter()
+                .filter_map(|(_, manifest, source)| match manifest {
+                    Manifest::Provider(provider) => Some((provider, source)),
+                    _ => None,
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
 fn discovered_manifests() -> Result<(Vec<(PathBuf, Manifest, String)>, Vec<String>), String> {
     let mut found = Vec::new();
     let mut errors = Vec::new();
@@ -620,17 +643,31 @@ fn validate_provider(provider: &ProviderManifest, base: &Path) -> Result<(), Str
                 validate_env_name(name, "credential_env")?;
             }
         }
-        "native" => {
+        "native" | "external" => {
             if !provider.runtime.command.is_empty()
                 || provider.runtime.protocol.is_some()
                 || provider.runtime.base_url.is_some()
                 || provider.runtime.base_url_env.is_some()
                 || provider.runtime.credential_env.is_some()
             {
-                return Err("native provider runtime cannot declare adapter fields".to_string());
+                return Err(format!(
+                    "{} provider runtime cannot declare adapter fields",
+                    provider.runtime.kind
+                ));
             }
         }
         other => return Err(format!("unsupported provider runtime type: {other}")),
+    }
+    if provider.runtime.kind == "external"
+        && provider
+            .usage
+            .as_deref()
+            .is_none_or(|u| u.trim().is_empty())
+    {
+        return Err("an external provider must say how the agent invokes it in usage".to_string());
+    }
+    if let Some(detect) = &provider.detect {
+        crate::detect::validate(detect)?;
     }
 
     let mut seen = HashSet::new();
@@ -935,6 +972,9 @@ printf '{"contract":"video-perception.example/v1","ok":true}'
                 output_schema: None,
             }],
             license: Some("MIT".to_string()),
+            detect: None,
+            usage: None,
+            notes: Vec::new(),
         };
 
         let output = execute_command_provider(

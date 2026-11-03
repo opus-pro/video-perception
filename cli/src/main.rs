@@ -1,6 +1,7 @@
 mod capabilities;
 mod commands;
 mod compare;
+mod detect;
 mod doctor;
 mod extensions;
 mod mcp;

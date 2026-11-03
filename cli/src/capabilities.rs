@@ -5,7 +5,7 @@
 //! model, changes configuration, or probes a remote endpoint. `doctor` remains
 //! the command that verifies live services.
 
-use crate::{extensions, util};
+use crate::{detect, extensions, util};
 use serde::Serialize;
 use serde_json::Value;
 use std::collections::BTreeMap;
@@ -116,6 +116,9 @@ struct CapabilityReport {
     device: DeviceReport,
     routing: RoutingReport,
     providers: Vec<ProviderReport>,
+    /// Tools the agent can call itself, plus user and project providers, each
+    /// evaluated with its manifest's read-only `detect` checks.
+    tools: Vec<detect::IndexEntry>,
     local_models: Vec<ModelRecommendation>,
     profiles: Vec<ProfileReport>,
     extensions: Value,
@@ -123,7 +126,7 @@ struct CapabilityReport {
     guarantees: Vec<String>,
 }
 
-trait Probe {
+pub(crate) trait Probe {
     fn os(&self) -> String;
     fn os_version(&self) -> Option<String>;
     fn architecture(&self) -> String;
@@ -132,9 +135,22 @@ trait Probe {
     fn command_exists(&self, name: &str) -> bool;
     fn file_exists(&self, path: &str) -> bool;
     fn env(&self, name: &str) -> Option<String>;
+
+    /// The path to run for a command name or path, if it can run here.
+    fn command_path(&self, name: &str) -> Option<String> {
+        self.command_exists(name).then(|| name.to_string())
+    }
+    /// Files matching a pattern with `~` and `*` in the last component.
+    fn glob(&self, _pattern: &str) -> Vec<String> {
+        Vec::new()
+    }
+    /// Whether a Python package can be found, without importing it.
+    fn python_module(&self, _name: &str) -> bool {
+        false
+    }
 }
 
-struct SystemProbe;
+pub(crate) struct SystemProbe;
 
 impl Probe for SystemProbe {
     fn os(&self) -> String {
@@ -209,6 +225,36 @@ impl Probe for SystemProbe {
             .map(|value| value.trim().to_string())
             .filter(|value| !value.is_empty())
     }
+
+    fn command_path(&self, name: &str) -> Option<String> {
+        if name.contains('/') {
+            return Path::new(name).is_file().then(|| name.to_string());
+        }
+        let paths = std::env::var_os("PATH")?;
+        std::env::split_paths(&paths)
+            .map(|dir| dir.join(name))
+            .find(|candidate| candidate.is_file())
+            .map(|found| found.to_string_lossy().into_owned())
+    }
+
+    fn glob(&self, pattern: &str) -> Vec<String> {
+        crate::detect::glob_paths(pattern, dirs::home_dir().as_deref())
+    }
+
+    fn python_module(&self, name: &str) -> bool {
+        // find_spec locates a top-level package without importing it, so no package code runs.
+        Command::new("python3")
+            .args([
+                "-I",
+                "-c",
+                "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec(sys.argv[1]) else 1)",
+                name,
+            ])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status()
+            .is_ok_and(|status| status.success())
+    }
 }
 
 pub fn execute(json: bool) -> Result<(), String> {
@@ -267,6 +313,7 @@ fn build_report(probe: &dyn Probe) -> CapabilityReport {
         .iter()
         .all(|tool| probe.command_exists(tool));
     let providers = provider_reports(probe);
+    let tools = tool_index(probe);
     let local_models = model_recommendations(probe, &device);
     let profiles = profile_reports(probe, core_ready, &providers);
     let extensions = extensions::discovery_value();
@@ -293,6 +340,7 @@ fn build_report(probe: &dyn Probe) -> CapabilityReport {
         device,
         routing,
         providers,
+        tools,
         local_models,
         profiles,
         extensions,
@@ -300,6 +348,7 @@ fn build_report(probe: &dyn Probe) -> CapabilityReport {
         guarantees: vec![
             "Discovery performs no downloads or configuration writes.".to_string(),
             "Discovery performs no remote network request; doctor verifies live services.".to_string(),
+            "A Python package check locates the package with importlib find_spec and never imports it.".to_string(),
             "A planned macOS framework capability is never reported as available until its provider host is installed.".to_string(),
             "Consumer profiles, business rules, and final judgments remain outside Video Perception.".to_string(),
         ],
@@ -381,138 +430,89 @@ fn device_report(probe: &dyn Probe) -> DeviceReport {
     }
 }
 
+/// Native providers come from the built-in catalog; their readiness is the
+/// result of the catalog's read-only `detect` checks, not code per provider.
 fn provider_reports(probe: &dyn Probe) -> Vec<ProviderReport> {
-    let is_macos = probe.os() == "macos";
-    let apple_bin = probe
-        .env("VIDEO_PERCEPTION_APPLE_SPEECH_BIN")
-        .unwrap_or_else(|| "video-perception-apple".to_string());
-    let apple_ready = is_macos && probe.command_exists(&apple_bin);
-    let apple_status = if apple_ready {
-        "ready"
-    } else if is_macos {
-        "provider-host-not-installed"
-    } else {
-        "unsupported-on-this-os"
-    };
-
-    let whisper_bin = probe.env("WHISPER_CPP_BIN");
-    let whisper_model = probe.env("WHISPER_CPP_MODEL");
-    let whisper_bin_ready = whisper_bin
-        .as_deref()
-        .is_some_and(|path| probe.command_exists(path));
-    let whisper_model_ready = whisper_model
-        .as_deref()
-        .is_some_and(|path| probe.file_exists(path));
-    let whisper_ready = whisper_bin_ready && whisper_model_ready;
-
-    let video_perception_vlm_ready = probe.command_exists("video-perception-vlm");
-    let ollama_ready = probe.command_exists("ollama");
-
-    vec![
-        ProviderReport {
-            id: "apple-speech".to_string(),
-            class: ProviderClass::SystemNative,
-            locality: "local".to_string(),
-            status: apple_status.to_string(),
-            capabilities: vec![ProviderCapability {
-                id: "transcript".to_string(),
-                ready: apple_ready,
-                verification: "executable-present".to_string(),
-            }],
-            requirements: vec![
-                requirement("macos", is_macos, "macOS host", None),
-                requirement(
-                    "apple-provider-host",
-                    apple_ready,
-                    &format!("{apple_bin} executable"),
-                    Some(
-                        "Install the signed Apple provider host or set VIDEO_PERCEPTION_APPLE_SPEECH_BIN",
-                    ),
-                ),
-            ],
-            privacy: "Media remains on this Mac.".to_string(),
-            notes: vec![
-                "Speech.framework is integrated only through the external provider host contract."
-                    .to_string(),
-                "Vision/OCR/saliency are planned capabilities and are not reported as available."
-                    .to_string(),
-            ],
-        },
-        ProviderReport {
-            id: "whisper-cpp".to_string(),
-            class: ProviderClass::UserManagedLocal,
-            locality: "local".to_string(),
-            status: if whisper_ready {
-                "ready"
-            } else {
-                "needs-setup"
+    detect::builtin_catalog()
+        .into_iter()
+        .filter(|provider| provider.runtime.kind == "native")
+        .map(|provider| {
+            let detect_block = provider.detect.clone().unwrap_or_default();
+            let evaluation = detect::evaluate(&detect_block, probe);
+            let mut requirements = Vec::new();
+            if !detect_block.platforms.is_empty() {
+                requirements.push(requirement(
+                    &detect_block.platforms.join("|"),
+                    evaluation.supported_platform,
+                    &format!("{} host", detect_block.platforms.join(" or ")),
+                    None,
+                ));
             }
-            .to_string(),
-            capabilities: vec![ProviderCapability {
-                id: "transcript".to_string(),
-                ready: whisper_ready,
-                verification: "binary-and-model-files-present".to_string(),
-            }],
-            requirements: vec![
-                requirement(
-                    "whisper-binary",
-                    whisper_bin_ready,
-                    "WHISPER_CPP_BIN points to an executable",
-                    Some("Install whisper.cpp and set WHISPER_CPP_BIN"),
-                ),
-                requirement(
-                    "whisper-model",
-                    whisper_model_ready,
-                    "WHISPER_CPP_MODEL points to a model file",
-                    Some("Download a whisper.cpp model and set WHISPER_CPP_MODEL"),
-                ),
-            ],
-            privacy: "Media remains on this machine.".to_string(),
-            notes: vec!["Uses a user-managed model and aligned timestamps.".to_string()],
-        },
-        ProviderReport {
-            id: "ollama".to_string(),
-            class: ProviderClass::UserManagedLocal,
-            locality: "local".to_string(),
-            status: if ollama_ready && video_perception_vlm_ready {
-                "runtime-installed"
-            } else {
-                "needs-setup"
+            requirements.extend(evaluation.checks.iter().map(|check| Requirement {
+                id: check.id.clone(),
+                met: check.met,
+                detail: match &check.resolved {
+                    Some(found) => format!("{}: {found}", check.detail),
+                    None => check.detail.clone(),
+                },
+                action: check.action.clone(),
+            }));
+            ProviderReport {
+                id: provider.id.clone(),
+                class: if detect_block.platforms.is_empty() {
+                    ProviderClass::UserManagedLocal
+                } else {
+                    ProviderClass::SystemNative
+                },
+                locality: provider.locality.clone(),
+                status: evaluation.status(&detect_block),
+                capabilities: provider
+                    .capabilities
+                    .iter()
+                    .map(|capability| ProviderCapability {
+                        id: capability.id.clone(),
+                        ready: evaluation.available,
+                        verification: detect_block
+                            .verification
+                            .clone()
+                            .unwrap_or_else(|| "requirements-present".to_string()),
+                    })
+                    .collect(),
+                requirements,
+                privacy: if provider.locality == "local" {
+                    "Media remains on this machine.".to_string()
+                } else {
+                    "Media may leave this machine.".to_string()
+                },
+                notes: provider.notes.clone(),
             }
-            .to_string(),
-            capabilities: vec![ProviderCapability {
-                id: "semantic-visual-observation".to_string(),
-                ready: ollama_ready && video_perception_vlm_ready,
-                verification: "runtime-present; model availability requires doctor".to_string(),
-            }],
-            requirements: vec![
-                requirement(
-                    "ollama",
-                    ollama_ready,
-                    "Ollama runtime",
-                    Some("brew install ollama"),
-                ),
-                requirement(
-                    "video-perception-vlm",
-                    video_perception_vlm_ready,
-                    "Video Perception VLM adapter",
-                    Some("Install the packaged video-perception-vlm adapter"),
-                ),
-            ],
-            privacy: "Media remains on this machine.".to_string(),
-            notes: vec![
-                "The model process and storage are owned by the user-managed runtime.".to_string(),
-                "Run doctor before relying on a pulled model or a live Ollama service.".to_string(),
-            ],
-        },
-    ]
+        })
+        .collect()
+}
+
+/// Tools the agent calls itself (built-in `external` entries) and every user or
+/// project provider, evaluated with the same read-only checks.
+fn tool_index(probe: &dyn Probe) -> Vec<detect::IndexEntry> {
+    let builtin = detect::builtin_catalog()
+        .into_iter()
+        .filter(|provider| provider.runtime.kind == "external")
+        .map(|provider| detect::index_entry(&provider, "built-in", probe));
+    let discovered = extensions::discovered_providers()
+        .into_iter()
+        .map(|(provider, source)| detect::index_entry(&provider, &source, probe));
+    builtin.chain(discovered).collect()
 }
 
 fn model_recommendations(probe: &dyn Probe, device: &DeviceReport) -> Vec<ModelRecommendation> {
-    let whisper_installed = probe
-        .env("WHISPER_CPP_MODEL")
-        .as_deref()
-        .is_some_and(|path| probe.file_exists(path));
+    let whisper_installed = detect::builtin_catalog()
+        .into_iter()
+        .find(|provider| provider.id == "whisper-cpp")
+        .and_then(|provider| provider.detect)
+        .is_some_and(|block| {
+            detect::evaluate(&block, probe)
+                .resolved("whisper-model")
+                .is_some()
+        });
     let ollama_runtime_installed = probe.command_exists("ollama");
 
     vec![
