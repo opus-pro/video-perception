@@ -39,20 +39,18 @@ a change to this repository.
 
 ## Install
 
-Each path installs the same `video-perception` executable for macOS (Apple
-Silicon or Intel) or Linux x86_64. FFmpeg and ffprobe must be on `PATH`;
+The installer puts the `video-perception` executable for macOS (Apple Silicon
+or Intel) or Linux x86_64 on your machine. FFmpeg and ffprobe must be on `PATH`;
 ImageMagick enables contact sheets.
 
 ```bash
 # Release binary, verified against the release checksums
 curl -fsSL https://raw.githubusercontent.com/opus-pro/video-perception/main/install.sh | sh
-
-# Homebrew
-brew install opus-pro/tap/video-perception
-
-# npm; or run without installing: npx video-perception mcp
-npm install -g video-perception
 ```
+
+Homebrew (`brew install opus-pro/tap/video-perception`) and npm
+(`npm install -g video-perception`) packages are prepared in `packaging/` but
+not published yet.
 
 Keep an installed release current with `video-perception update`. Other
 platforms build from source as in the quick start below.

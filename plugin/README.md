@@ -51,9 +51,10 @@ compatibility fallback for older builds.
 
 ```bash
 codex plugin marketplace add opus-pro/video-perception
+codex plugin add video-perception@video-perception
 ```
 
-Then install `video-perception` from the plugin browser.
+Or install `video-perception` from the plugin browser after adding the marketplace.
 
 **Any Agent Plugins 1.0 client.** Point the client at this directory.
 `plugin.json`, `mcp.json`, and `skills/` are the portable components;
