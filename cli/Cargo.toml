@@ -18,6 +18,6 @@ serde_yaml = "0.9"
 rayon = "1"
 rmcp = { version = "3.5", features = ["server", "macros", "transport-io"] }
 semver = "1"
-sha2 = "0.10"
+sha2 = "0.11"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "process", "io-util", "fs", "sync"] }
 base64 = "0.22"
