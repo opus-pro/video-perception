@@ -1,0 +1,7 @@
+contract: video-perception.knowledge-pack/v1
+id: foundation.specialist-models
+version: 0.1.0
+description: When and how to use open specialist vision models (shot boundaries, segmentation, open-vocabulary detection, objects, faces, active speaker) that Video Perception does not run itself
+knowledge:
+  - guide.md
+license: MIT

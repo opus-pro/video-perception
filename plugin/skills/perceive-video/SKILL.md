@@ -74,7 +74,10 @@ the index. See `../add-provider/SKILL.md`.
 ## Methods, when a task is hard
 
 For long, live, or unfamiliar sources, read `../../packs/foundation/playbook.md`
-and the strategies in `../../strategies/`. They are optional guidance.
+and the strategies in `../../strategies/`. When a question needs a trained
+model, such as shot boundaries through fades, object or face detection,
+segmentation, or who is speaking on screen, read
+`../../packs/specialist-models/guide.md`. They are optional guidance.
 
 For a live source, use `video-perception stream <source> --capabilities
 keyframes,signalstats --out <out>/session` only when every requested catalog
