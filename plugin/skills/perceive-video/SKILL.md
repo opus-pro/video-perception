@@ -26,7 +26,10 @@ It takes about a tenth of a second and installs nothing.
   following it.
 
 Do not search the disk for models or tools. If the index does not list
-something as available, tell the user the `action` it gives instead.
+something as available, tell the user the `action` it gives instead. An entry
+with `status: unchecked` declares no checks, so nothing was verified: it may
+still work. Try it on a short clip before relying on it, and offer to add a
+`detect` block to its manifest.
 
 ## 2. Take the cheapest route
 
