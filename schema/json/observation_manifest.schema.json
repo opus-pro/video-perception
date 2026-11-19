@@ -195,6 +195,7 @@
           },
           "output": {
             "type": "string",
+            "format": "starts_with",
             "pattern": "^signals\\/.*"
           },
           "error": {
