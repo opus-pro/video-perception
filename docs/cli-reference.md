@@ -114,6 +114,14 @@ video-perception compare observation-a observation-b
 
 The query command returns machine-readable evidence from an existing Observation; it does not call a model.
 
+`observe` records the source file's SHA-256, size, and modification time in
+`manifest.json` under `asset`. When the file at `asset.uri` has changed since,
+`query` prints a warning to stderr (and the MCP `query` tool adds it to the
+result): the Observation's timestamps may no longer match the file, so run
+`observe` again. Size and modification time are compared first, so an
+unchanged file is not rehashed. A missing file, or an Observation made before
+this field existed, produces no warning.
+
 ## Stream
 
 ```bash

@@ -1,8 +1,7 @@
 use semver::Version;
-use sha2::{Digest, Sha256};
 use std::cmp::Ordering;
 use std::fs::{self, File};
-use std::io::{self, Read};
+use std::io;
 use std::path::Path;
 use std::process::{Command, Output};
 
@@ -229,20 +228,7 @@ fn verify_release_checksum(
         ));
     }
 
-    let mut file = File::open(archive_path)
-        .map_err(|error| format!("open {}: {error}", archive_path.display()))?;
-    let mut hasher = Sha256::new();
-    let mut buffer = [0_u8; 64 * 1024];
-    loop {
-        let read = file
-            .read(&mut buffer)
-            .map_err(|error| format!("read {}: {error}", archive_path.display()))?;
-        if read == 0 {
-            break;
-        }
-        hasher.update(&buffer[..read]);
-    }
-    let actual = format!("{:x}", hasher.finalize());
+    let actual = crate::util::sha256_file(archive_path)?;
     if !actual.eq_ignore_ascii_case(expected) {
         return Err(format!(
             "checksum mismatch for `{asset_name}`: expected {expected}, got {actual}"

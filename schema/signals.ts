@@ -457,6 +457,10 @@ export const ObservationManifest = z.object({
       height: z.number().int().nonnegative(),
     }),
     fps: z.number().nonnegative(),
+    /** Fingerprint of the source file when the Observation was made. A query warns when the file at `uri` no longer matches. */
+    sha256: z.string().regex(/^[0-9a-f]{64}$/).optional(),
+    size_bytes: z.number().int().nonnegative().optional(),
+    modified_unix_ms: z.number().int().nonnegative().optional(),
   }),
   scene_count: z.number().int().nonnegative(),
   capabilities: z.array(ObservationCapability),

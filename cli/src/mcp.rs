@@ -261,7 +261,16 @@ impl VideoPerception {
         if !output.success {
             return Ok(cli_failure("query", &output));
         }
-        Ok(json_or_text(&output.stdout))
+        let mut result = json_or_text(&output.stdout);
+        // Surface a changed-source warning; other stderr stays out of the result.
+        for line in output
+            .stderr
+            .lines()
+            .filter(|line| line.starts_with("warning: "))
+        {
+            result.content.push(ContentBlock::text(line.to_string()));
+        }
+        Ok(result)
     }
 
     #[tool(

@@ -96,6 +96,50 @@ pub fn generate(
     })
 }
 
+/// Identify the exact source file an Observation was made from.
+///
+/// Size and modification time let a later query skip rehashing when nothing
+/// changed; the SHA-256 decides when they differ.
+pub fn fingerprint(path: &Path) -> Result<Value, String> {
+    let metadata =
+        std::fs::metadata(path).map_err(|error| format!("stat {}: {error}", path.display()))?;
+    Ok(json!({
+        "sha256": crate::util::sha256_file(path)?,
+        "size_bytes": metadata.len(),
+        "modified_unix_ms": modified_unix_ms(&metadata),
+    }))
+}
+
+/// A warning when the source file at `asset.uri` no longer matches the
+/// recorded fingerprint. Returns `None` when it matches, when the manifest has
+/// no fingerprint (older Observations), or when the file cannot be found.
+pub fn source_warning(manifest: &Value) -> Option<String> {
+    let asset = manifest.get("asset")?;
+    let recorded = asset.get("sha256")?.as_str()?;
+    let uri = asset.get("uri")?.as_str()?;
+    let metadata = std::fs::metadata(uri).ok()?;
+    let unchanged = asset.get("size_bytes").and_then(Value::as_u64) == Some(metadata.len())
+        && asset.get("modified_unix_ms").and_then(Value::as_u64) == modified_unix_ms(&metadata);
+    if unchanged {
+        return None;
+    }
+    let current = crate::util::sha256_file(Path::new(uri)).ok()?;
+    (current != recorded).then(|| {
+        format!(
+            "warning: {uri} changed after this Observation was made (sha256 {} recorded, {} now). \
+             Its timestamps and evidence may not match the file; run observe again.",
+            recorded.get(..12).unwrap_or(recorded),
+            current.get(..12).unwrap_or(&current),
+        )
+    })
+}
+
+fn modified_unix_ms(metadata: &std::fs::Metadata) -> Option<u64> {
+    let modified = metadata.modified().ok()?;
+    let since = modified.duration_since(std::time::UNIX_EPOCH).ok()?;
+    u64::try_from(since.as_millis()).ok()
+}
+
 pub fn validate_contract(manifest: &Value) -> Result<(), String> {
     match manifest.get("contract").and_then(Value::as_str) {
         Some("video-perception.observation/v1") => Ok(()),
@@ -247,6 +291,54 @@ mod tests {
             "video-perception.sense-plan/v1"
         );
         let _ = std::fs::remove_dir_all(signals);
+    }
+
+    #[test]
+    fn source_warning_reports_a_changed_file_only() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let dir = std::env::temp_dir().join(format!("vp-fingerprint-{unique}"));
+        std::fs::create_dir_all(&dir).unwrap();
+        let video = dir.join("clip.mp4");
+        std::fs::write(&video, b"original bytes").unwrap();
+        let uri = video.to_str().unwrap();
+
+        let mut manifest = json!({ "asset": { "uri": uri } });
+        assert_eq!(
+            source_warning(&manifest),
+            None,
+            "no fingerprint: stay quiet"
+        );
+
+        let print = fingerprint(&video).unwrap();
+        for (key, value) in print.as_object().unwrap() {
+            manifest["asset"][key] = value.clone();
+        }
+        assert_eq!(source_warning(&manifest), None, "unchanged file");
+
+        // Same bytes, new modification time: rehash finds no change.
+        let later = SystemTime::now() + std::time::Duration::from_secs(5);
+        std::fs::File::options()
+            .write(true)
+            .open(&video)
+            .unwrap()
+            .set_modified(later)
+            .unwrap();
+        assert_eq!(source_warning(&manifest), None, "touched, same content");
+
+        std::fs::write(&video, b"re-encoded bytes").unwrap();
+        let warning = source_warning(&manifest).expect("changed content warns");
+        assert!(warning.contains("changed after this Observation was made"));
+
+        std::fs::remove_file(&video).unwrap();
+        assert_eq!(
+            source_warning(&manifest),
+            None,
+            "missing file: cannot check"
+        );
+        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
