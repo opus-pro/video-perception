@@ -103,20 +103,27 @@ pub fn generate(
 pub fn fingerprint(path: &Path) -> Result<Value, String> {
     let metadata =
         std::fs::metadata(path).map_err(|error| format!("stat {}: {error}", path.display()))?;
-    Ok(json!({
+    // An absolute path lets a query from any directory find the source again.
+    let absolute = std::fs::canonicalize(path)
+        .map_err(|error| format!("resolve {}: {error}", path.display()))?;
+    let mut print = json!({
+        "path": absolute.to_string_lossy(),
         "sha256": crate::util::sha256_file(path)?,
         "size_bytes": metadata.len(),
-        "modified_unix_ms": modified_unix_ms(&metadata),
-    }))
+    });
+    if let Some(modified) = modified_unix_ms(&metadata) {
+        print["modified_unix_ms"] = json!(modified);
+    }
+    Ok(print)
 }
 
-/// A warning when the source file at `asset.uri` no longer matches the
-/// recorded fingerprint. Returns `None` when it matches, when the manifest has
+/// A warning when the source file (`asset.path`, else `asset.uri`) no longer
+/// matches the recorded fingerprint. Returns `None` when it matches, when the manifest has
 /// no fingerprint (older Observations), or when the file cannot be found.
 pub fn source_warning(manifest: &Value) -> Option<String> {
     let asset = manifest.get("asset")?;
     let recorded = asset.get("sha256")?.as_str()?;
-    let uri = asset.get("uri")?.as_str()?;
+    let uri = asset.get("path").or_else(|| asset.get("uri"))?.as_str()?;
     let metadata = std::fs::metadata(uri).ok()?;
     let unchanged = asset.get("size_bytes").and_then(Value::as_u64) == Some(metadata.len())
         && asset.get("modified_unix_ms").and_then(Value::as_u64) == modified_unix_ms(&metadata);
@@ -303,9 +310,9 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let video = dir.join("clip.mp4");
         std::fs::write(&video, b"original bytes").unwrap();
-        let uri = video.to_str().unwrap();
 
-        let mut manifest = json!({ "asset": { "uri": uri } });
+        // The recorded uri may be relative to a directory the query is not in.
+        let mut manifest = json!({ "asset": { "uri": "clip.mp4" } });
         assert_eq!(
             source_warning(&manifest),
             None,
@@ -316,6 +323,7 @@ mod tests {
         for (key, value) in print.as_object().unwrap() {
             manifest["asset"][key] = value.clone();
         }
+        assert!(Path::new(print["path"].as_str().unwrap()).is_absolute());
         assert_eq!(source_warning(&manifest), None, "unchanged file");
 
         // Same bytes, new modification time: rehash finds no change.
