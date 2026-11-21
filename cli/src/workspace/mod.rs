@@ -114,19 +114,25 @@ pub fn observe(
     let ws = Path::new(observation_dir);
     let signals_dir = ws.join("signals");
     let signals_str = signals_dir.to_string_lossy().to_string();
+    // Fingerprint before running so the Observation names the bytes it measured.
+    let source = manifest::fingerprint(Path::new(video)).ok();
 
     // Run requested capabilities into observation/signals/.
     crate::run::execute_plan(video, &signals_str, sense_plan, true)?;
 
     // Build the stable Observation views on top.
-    generate(&signals_str, observation_dir)?;
+    generate(&signals_str, observation_dir, source.as_ref())?;
     let manifest = load_json(ws, "manifest.json")?;
     print_capability_status(&manifest);
     Ok(())
 }
 
 /// Materialize an Observation from executor output.
-fn generate(signals_dir: &str, observation_dir: &str) -> Result<(), String> {
+fn generate(
+    signals_dir: &str,
+    observation_dir: &str,
+    source: Option<&Value>,
+) -> Result<(), String> {
     let signals = Path::new(signals_dir);
     let ws = Path::new(observation_dir);
 
@@ -262,13 +268,18 @@ fn generate(signals_dir: &str, observation_dir: &str) -> Result<(), String> {
         .map(|a| a.len())
         .unwrap_or(0);
 
-    let manifest = manifest::generate(
+    let mut manifest = manifest::generate(
         &metadata,
         signals,
         &execution,
         transcript.is_some(),
         joined.len(),
     );
+    if let Some(fields) = source.and_then(Value::as_object) {
+        for (key, value) in fields {
+            manifest["asset"][key] = value.clone();
+        }
+    }
     fs::write(
         ws.join("manifest.json"),
         serde_json::to_string_pretty(&manifest).unwrap(),
