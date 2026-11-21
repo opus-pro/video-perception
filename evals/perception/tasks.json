@@ -1,0 +1,82 @@
+{
+  "contract": "video-perception.eval-tasks/v1",
+  "suffix": "Do not ask me questions; give your best answer. Use seconds from the start of the video. Finish your reply with one final line that starts with ANSWER: followed by a JSON object with exactly these keys: {keys}.",
+  "tasks": [
+    {
+      "id": "tutorial-mention",
+      "video": "tutorial.mp4",
+      "story": "Jump to the moment I talk about a product",
+      "prompt": "In tutorial.mp4, when do I first mention the Lumina Pro plan? I want to jump straight to that part.",
+      "keys": {
+        "time_s": "number"
+      }
+    },
+    {
+      "id": "tutorial-dead-air",
+      "video": "tutorial.mp4",
+      "story": "Cut the dead air",
+      "prompt": "I want to tighten tutorial.mp4. Is there a stretch longer than five seconds where nobody is talking? Tell me where it starts and ends so I can cut it.",
+      "keys": {
+        "start_s": "number",
+        "end_s": "number"
+      }
+    },
+    {
+      "id": "tutorial-code",
+      "video": "tutorial.mp4",
+      "story": "Read something shown on screen",
+      "prompt": "What discount code is shown on screen in tutorial.mp4, and when does it first appear?",
+      "keys": {
+        "code": "string",
+        "start_s": "number"
+      }
+    },
+    {
+      "id": "tutorial-black",
+      "video": "tutorial.mp4",
+      "story": "Check for blank screens before uploading",
+      "prompt": "Before I upload tutorial.mp4: does it have any black or blank screens? List every one with its start and end.",
+      "keys": {
+        "segments": "array of [start_s, end_s]; empty if none"
+      }
+    },
+    {
+      "id": "tutorial-spike",
+      "video": "tutorial.mp4",
+      "story": "Catch a sound that would hurt viewers' ears",
+      "prompt": "Does tutorial.mp4 have a sudden loud noise that would hurt viewers' ears? When does it happen?",
+      "keys": {
+        "time_s": "number or null if none"
+      }
+    },
+    {
+      "id": "tutorial-cuts",
+      "video": "tutorial.mp4",
+      "story": "Count the edits",
+      "prompt": "How many hard cuts are there in tutorial.mp4? A hard cut is an abrupt change from one shot or slide to a different one.",
+      "keys": {
+        "cuts": "integer"
+      }
+    },
+    {
+      "id": "lecture-password",
+      "video": "lecture.mp4",
+      "story": "Find one sentence in a 12-minute recording",
+      "prompt": "At some point in lecture.mp4 the lecturer says the exam password. What is the password, and when is it said?",
+      "keys": {
+        "password": "string",
+        "time_s": "number"
+      }
+    },
+    {
+      "id": "lecture-room",
+      "video": "lecture.mp4",
+      "story": "Catch a few seconds of on-screen text in a long video",
+      "prompt": "lecture.mp4 briefly shows a room number for the exam review. Which room is it, and when does it appear on screen?",
+      "keys": {
+        "room": "string",
+        "start_s": "number"
+      }
+    }
+  ]
+}
