@@ -77,6 +77,9 @@ pub fn execute(
     let manifest: Value = serde_json::from_str(&manifest_body)
         .map_err(|error| format!("parse {}: {error}", manifest_path.display()))?;
     super::manifest::validate_contract(&manifest)?;
+    if let Some(warning) = super::manifest::source_warning(&manifest) {
+        eprintln!("{warning}");
+    }
     let layer = detect_layer(at, frame, window, field, text);
 
     match layer {
