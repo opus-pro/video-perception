@@ -52,7 +52,11 @@ resolved, in the machine's index. A check is exactly one of:
 - `python_module`: a top-level package located with `importlib.util.find_spec`,
   which does not import it.
 
-`platforms` limits the provider to `macos`, `linux`, or `windows`.
+`platforms` limits the provider to `macos`, `linux`, or `windows`. A provider
+without a `detect` block is listed with `status: unchecked` and
+`available: false`. That means nothing was verified, not that it is broken;
+`doctor` does not test extension providers, so the agent should try it on a
+short clip before relying on it.
 
 ### External tool example
 

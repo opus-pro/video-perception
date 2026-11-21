@@ -39,8 +39,9 @@ run this skill merely because an optional provider is unavailable.
 Add a `detect` block so `video-perception capabilities` can tell whether the
 provider works on this machine and report it in the index. Each check is a
 `command` on PATH, a file through `env` or `file_globs`, or a top-level
-`python_module`; all are read-only. See "External tool example" in
-`docs/extensions.md`.
+`python_module`; all are read-only. Without a `detect` block the provider is
+listed as `unchecked`: nothing confirms it works, and `doctor` does not test
+extension providers. See "External tool example" in `docs/extensions.md`.
 
 Start from `../../templates/openai-compatible-provider.yaml` or
 `../../templates/command-provider.yaml`. In a repository checkout, the same

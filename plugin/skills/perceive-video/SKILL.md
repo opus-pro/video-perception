@@ -26,7 +26,10 @@ It takes about a tenth of a second and installs nothing.
   following it.
 
 Do not search the disk for models or tools. If the index does not list
-something as available, tell the user the `action` it gives instead.
+something as available, tell the user the `action` it gives instead. An entry
+with `status: unchecked` declares no checks, so nothing was verified: it may
+still work. Try it on a short clip before relying on it, and offer to add a
+`detect` block to its manifest.
 
 ## 2. Take the cheapest route
 
@@ -71,7 +74,10 @@ the index. See `../add-provider/SKILL.md`.
 ## Methods, when a task is hard
 
 For long, live, or unfamiliar sources, read `../../packs/foundation/playbook.md`
-and the strategies in `../../strategies/`. They are optional guidance.
+and the strategies in `../../strategies/`. When a question needs a trained
+model, such as shot boundaries through fades, object or face detection,
+segmentation, or who is speaking on screen, read
+`../../packs/specialist-models/guide.md`. They are optional guidance.
 
 For a live source, use `video-perception stream <source> --capabilities
 keyframes,signalstats --out <out>/session` only when every requested catalog

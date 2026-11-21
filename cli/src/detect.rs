@@ -246,8 +246,13 @@ pub fn index_entry(provider: &ProviderManifest, source: &str, probe: &dyn Probe)
         runtime: provider.runtime.kind.clone(),
         capabilities: provider.capabilities.iter().map(|c| c.id.clone()).collect(),
         locality: provider.locality.clone(),
-        status: evaluation.status(&detect),
-        available: evaluation.available,
+        // Without a detect block nothing was checked, so do not claim the provider works here.
+        status: if provider.detect.is_some() {
+            evaluation.status(&detect)
+        } else {
+            "unchecked".to_string()
+        },
+        available: provider.detect.is_some() && evaluation.available,
         trusted,
         usage: if trusted { provider.usage.clone() } else { None },
         note: (!trusted).then(|| {
@@ -361,6 +366,18 @@ mod tests {
         let user = index_entry(&provider, "user", &probe);
         assert!(user.trusted);
         assert!(user.usage.is_some());
+    }
+
+    #[test]
+    fn a_provider_without_detect_is_unchecked_not_ready() {
+        let mut provider = builtin_catalog()
+            .into_iter()
+            .find(|provider| provider.id == "tesseract-ocr")
+            .unwrap();
+        provider.detect = None;
+        let entry = index_entry(&provider, "user", &crate::capabilities::SystemProbe);
+        assert_eq!(entry.status, "unchecked");
+        assert!(!entry.available);
     }
 
     #[test]
