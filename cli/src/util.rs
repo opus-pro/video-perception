@@ -1,5 +1,26 @@
 /// Shared utilities used across sensor commands and doctor.
+use sha2::{Digest, Sha256};
+use std::io::Read;
+use std::path::Path;
 use std::process::Command;
+
+/// Hex SHA-256 of a file, read in 64 KiB chunks.
+pub fn sha256_file(path: &Path) -> Result<String, String> {
+    let mut file =
+        std::fs::File::open(path).map_err(|error| format!("open {}: {error}", path.display()))?;
+    let mut hasher = Sha256::new();
+    let mut buffer = [0_u8; 64 * 1024];
+    loop {
+        let read = file
+            .read(&mut buffer)
+            .map_err(|error| format!("read {}: {error}", path.display()))?;
+        if read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..read]);
+    }
+    Ok(format!("{:x}", hasher.finalize()))
+}
 
 /// Run ImageMagick `magick` with given args. Returns trimmed stdout on success.
 pub fn run_magick(args: &[&str]) -> Result<String, String> {

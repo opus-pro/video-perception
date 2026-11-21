@@ -32,13 +32,9 @@
       "type": "string"
     },
     "parent": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
+      "type": [
+        "string",
+        "null"
       ]
     },
     "round": {
@@ -82,13 +78,9 @@
           "maximum": 9007199254740991
         },
         "crop": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         },
         "timeout_seconds": {
@@ -176,13 +168,9 @@
       }
     },
     "sheet": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
+      "type": [
+        "string",
+        "null"
       ]
     },
     "elapsed_ms": {
