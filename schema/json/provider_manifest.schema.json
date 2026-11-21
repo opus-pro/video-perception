@@ -102,6 +102,19 @@
             "type"
           ],
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "external"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
         }
       ]
     },
@@ -153,6 +166,94 @@
     "license": {
       "type": "string",
       "minLength": 1
+    },
+    "detect": {
+      "type": "object",
+      "properties": {
+        "platforms": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "macos",
+              "linux",
+              "windows"
+            ]
+          }
+        },
+        "checks": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "detail": {
+                "type": "string",
+                "minLength": 1
+              },
+              "action": {
+                "type": "string",
+                "minLength": 1
+              },
+              "command": {
+                "type": "string",
+                "minLength": 1
+              },
+              "env": {
+                "type": "string",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+              },
+              "file_globs": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "python_module": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_]+$"
+              }
+            },
+            "required": [
+              "id",
+              "detail"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "verification": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ready_status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "missing_status": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "checks"
+      ],
+      "additionalProperties": false
+    },
+    "usage": {
+      "type": "string",
+      "minLength": 1
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     }
   },
   "required": [

@@ -43,7 +43,15 @@ The manifest declares:
 - local or remote execution and whether media can leave the machine;
 - a runtime transport that contains no credential values;
 - the exact capability cells and modes implemented;
-- optional model defaults, schemas, and license information.
+- optional model defaults, schemas, and license information;
+- an optional `detect` block of read-only checks that decides whether the
+  provider can run on this machine;
+- for an `external` runtime, `usage` that tells the agent how to call the tool
+  itself.
+
+`video-perception capabilities --json` evaluates every `detect` block,
+built-in or user-supplied, and reports the result as the machine's index. See
+[decision 0005](decisions/0005-capability-contract-not-sop.md).
 
 See [extension authoring](extensions.md) for complete examples and the command
 stdio protocol.

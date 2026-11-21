@@ -29,11 +29,48 @@ const NativeRuntime = z.object({
   type: z.literal("native"),
 });
 
+/** A tool the agent invokes itself; Video Perception never runs it. */
+const ExternalRuntime = z.object({
+  type: z.literal("external"),
+});
+
 export const ProviderRuntime = z.union([
   CommandRuntime,
   CompatibleRuntime,
   NativeRuntime,
+  ExternalRuntime,
 ]);
+
+/**
+ * One read-only check. Exactly one of: `command` (optionally overridden by the
+ * path in `env`), a file check (`env` and/or `file_globs`), or `python_module`
+ * (a top-level package located with importlib find_spec, never imported).
+ */
+export const DetectCheck = z.object({
+  id: z.string().min(1),
+  detail: z.string().min(1),
+  action: z.string().min(1).optional(),
+  command: z.string().min(1).optional(),
+  env: EnvironmentName.optional(),
+  file_globs: z.array(z.string().min(1)).optional(),
+  python_module: z.string().regex(/^[A-Za-z0-9_]+$/).optional(),
+}).refine(
+  (check) => {
+    const isFile = check.command === undefined && (check.env !== undefined || (check.file_globs?.length ?? 0) > 0);
+    const kinds = [check.command !== undefined, check.python_module !== undefined, isFile].filter(Boolean).length;
+    return kinds === 1 && !(check.python_module !== undefined && check.env !== undefined);
+  },
+  "A check is exactly one of command, file (env/file_globs), or python_module",
+);
+
+/** Read-only checks that say whether a provider can run on the current machine. */
+export const ProviderDetect = z.object({
+  platforms: z.array(z.enum(["macos", "linux", "windows"])).optional(),
+  checks: z.array(DetectCheck).default([]),
+  verification: z.string().min(1).optional(),
+  ready_status: z.string().min(1).optional(),
+  missing_status: z.string().min(1).optional(),
+});
 
 export const ProviderCapability = z.object({
   id: z.string().min(1),
@@ -53,9 +90,15 @@ export const ProviderManifest = z.object({
   runtime: ProviderRuntime,
   capabilities: z.array(ProviderCapability).min(1),
   license: z.string().min(1).optional(),
+  detect: ProviderDetect.optional(),
+  usage: z.string().min(1).optional(),
+  notes: z.array(z.string().min(1)).optional(),
 }).refine(
   (provider) => provider.locality !== "remote" || provider.media_transfer !== "never",
   "A remote provider cannot declare media_transfer: never",
+).refine(
+  (provider) => provider.runtime.type !== "external" || provider.usage !== undefined,
+  "An external provider must say how the agent invokes it in usage",
 );
 
 export const StrategyManifest = z.object({
